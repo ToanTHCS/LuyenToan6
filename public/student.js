@@ -240,9 +240,9 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     ---Điểm số---
     [Điểm trên thang điểm 10]
     ---Nhận xét---
-    [Nhận xét chi tiết]
+    [Nhận xét chi tiết, có thể nhiều dòng]
     ---Đề xuất cải thiện---
-    [Các đề xuất cụ thể]
+    [Các đề xuất cụ thể, có thể nhiều dòng]
 
     ❗Điểm số phải là số từ 0 đến 10, có thể có một chữ số thập phân.
     ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".
@@ -268,7 +268,7 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
             throw new Error('Không nhận được phản hồi hợp lệ từ API');
         }
 
-        // Sử dụng biểu thức chính quy để trích xuất dữ liệu theo từng phần
+        // Sử dụng biểu thức chính quy để trích xuất từng phần dữ liệu, đảm bảo lấy đầy đủ nội dung của từng mục
         const studentAnswer = response.match(/---Bài làm của học sinh---\n([\s\S]*?)\n---Lời giải chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
         const detailedSolution = response.match(/---Lời giải chi tiết---\n([\s\S]*?)\n---Chấm điểm chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
         const gradingDetails = response.match(/---Chấm điểm chi tiết---\n([\s\S]*?)\n---Điểm số---/)?.[1]?.trim() || "Không thể xử lý";
@@ -297,6 +297,7 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
         };
     }
 }
+
 
 // Hàm khi nhấn nút "Chấm bài"
 document.getElementById("submitBtn").addEventListener("click", async () => {
