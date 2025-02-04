@@ -216,7 +216,7 @@ async function makeApiRequest(apiUrl, requestBody) {
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
     
-    // Prompt yêu cầu AI trả về đúng 6 dòng
+    // Prompt yêu cầu AI trả về đúng 6 phần dữ liệu, có thể có nhiều dòng
     const promptText = `
     Học sinh: ${studentId}
     Đề bài:
@@ -229,17 +229,23 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     4. Chấm điểm bài làm của học sinh trên thang điểm 10, cho 0 điểm với bài giải không đúng yêu cầu đề bài. Giải thích chi tiết cách tính điểm cho từng phần.
     5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
     6. Kiểm tra lại kết quả chấm điểm và đảm bảo tính nhất quán giữa bài làm, lời giải, và điểm số.
-    
-    🚨 KẾT QUẢ PHẢI TRẢ VỀ ĐÚNG 6 DÒNG, THEO ĐỊNH DẠNG SAU:
-    1. Bài làm của học sinh: [Bài làm được nhận diện từ hình ảnh]
-    2. Lời giải chi tiết: [Lời giải từng bước]
-    3. Chấm điểm chi tiết: [Giải thích cách chấm điểm]
-    4. Điểm số: [Điểm trên thang điểm 10]
-    5. Nhận xét: [Nhận xét chi tiết]
-    6. Đề xuất cải thiện: [Các đề xuất cụ thể]
 
-    ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".
+    🚨 KẾT QUẢ PHẢI TRẢ VỀ THEO ĐỊNH DẠNG SAU:
+    ---Bài làm của học sinh---
+    [Bài làm được nhận diện từ hình ảnh]
+    ---Lời giải chi tiết---
+    [Lời giải từng bước]
+    ---Chấm điểm chi tiết---
+    [Giải thích cách chấm điểm]
+    ---Điểm số---
+    [Điểm trên thang điểm 10]
+    ---Nhận xét---
+    [Nhận xét chi tiết]
+    ---Đề xuất cải thiện---
+    [Các đề xuất cụ thể]
+
     ❗Điểm số phải là số từ 0 đến 10, có thể có một chữ số thập phân.
+    ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".
     ❗Nếu có sự không nhất quán giữa bài làm và điểm số, hãy giải thích rõ lý do.
     `;
 
@@ -257,21 +263,18 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     try {
         const data = await makeApiRequest(apiUrl, requestBody);
         const response = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        
+
         if (!response) {
             throw new Error('Không nhận được phản hồi hợp lệ từ API');
         }
 
-        // Chia kết quả thành các dòng riêng biệt
-        const lines = response.split("\n").map(line => line.trim()).filter(line => line !== "");
-
-        // Đảm bảo có đủ 6 dòng, nếu không thì gán giá trị mặc định
-        const studentAnswer = lines[0]?.replace("Bài làm của học sinh:", "").trim() || "Không thể xử lý";
-        const detailedSolution = lines[1]?.replace("Lời giải chi tiết:", "").trim() || "Không thể xử lý";
-        const gradingDetails = lines[2]?.replace("Chấm điểm chi tiết:", "").trim() || "Không thể xử lý";
-        const score = parseFloat(lines[3]?.replace("Điểm số:", "").trim()) || 0;
-        const feedback = lines[4]?.replace("Nhận xét:", "").trim() || "Không thể xử lý";
-        const suggestions = lines[5]?.replace("Đề xuất cải thiện:", "").trim() || "Không thể xử lý";
+        // Sử dụng biểu thức chính quy để trích xuất dữ liệu theo từng phần
+        const studentAnswer = response.match(/---Bài làm của học sinh---\n([\s\S]*?)\n---Lời giải chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
+        const detailedSolution = response.match(/---Lời giải chi tiết---\n([\s\S]*?)\n---Chấm điểm chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
+        const gradingDetails = response.match(/---Chấm điểm chi tiết---\n([\s\S]*?)\n---Điểm số---/)?.[1]?.trim() || "Không thể xử lý";
+        const score = parseFloat(response.match(/---Điểm số---\n([\d.]+)/)?.[1]) || 0;
+        const feedback = response.match(/---Nhận xét---\n([\s\S]*?)\n---Đề xuất cải thiện---/)?.[1]?.trim() || "Không thể xử lý";
+        const suggestions = response.match(/---Đề xuất cải thiện---\n([\s\S]*)/)?.[1]?.trim() || "Không thể xử lý";
 
         return {
             studentAnswer,
