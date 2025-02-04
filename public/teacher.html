@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Giáo Viên</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>📚 Quản Lý Học Tập - Giáo Viên</h1>
+
+    <!-- Đăng nhập giáo viên -->
+    <div id="teacherLogin">
+        <input type="password" id="teacherPassword" placeholder="Nhập mật khẩu giáo viên">
+        <button onclick="loginTeacher()">Đăng nhập</button>
+    </div>
+
+    <!-- Khu vực quản lý sau khi đăng nhập -->
+    <div id="teacherPanel" style="display: none;">
+        <h2>🎓 Quản lý học sinh</h2>
+        <button onclick="fetchStudents()">🔄 Tải danh sách học sinh</button>
+        <table id="studentsTable">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>ID</th>
+                    <th>Họ tên</th>
+                    <th>Xóa</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <input type="text" id="newStudentId" placeholder="ID mới">
+        <input type="text" id="newStudentName" placeholder="Tên học sinh mới">
+        <button onclick="addStudent()">➕ Thêm học sinh</button>
+
+        <h2>📝 Quản lý bài tập</h2>
+        <button onclick="fetchProblems()">🔄 Tải danh sách bài tập</button>
+        <table id="problemsTable">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Bài tập</th>
+                    <th>Xóa</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <textarea id="newProblemText" placeholder="Nhập bài tập mới"></textarea>
+        <button onclick="addProblem()">➕ Thêm bài tập</button>
+
+        <h2>📊 Tổng kết điểm</h2>
+        <button onclick="fetchProgress()">📥 Lấy tổng kết điểm</button>
+        <table id="progressTable">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>ID</th>
+                    <th>Họ tên</th>
+                    <th>Số bài đã làm</th>
+                    <th>Điểm trung bình</th>
+                    <th>Xóa tiến trình</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script src="teacher.js"></script>
+</body>
+</html>

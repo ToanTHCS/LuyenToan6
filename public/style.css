@@ -1,0 +1,236 @@
+/* Thêm Google Fonts cho hỗ trợ tiếng Việt */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* Hoặc bạn có thể chọn một font khác như Noto Sans */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500&display=swap');
+
+* {
+    font-family: 'Roboto', sans-serif;  /* Đặt font mặc định cho toàn bộ trang */
+    line-height: 1.6;   /* Tăng khoảng cách giữa các dòng cho dễ đọc */
+}
+
+/* Cấu hình cho các phần tiêu đề, nội dung */
+h1, h2, h3, h4 {
+    font-weight: 700;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+/* Tổng thể trang */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Phần tiêu đề */
+h1 {
+    text-align: center;
+    font-size: 2.5em;
+    margin: 20px 0;
+}
+
+/* Khung chứa toàn bộ nội dung chính */
+#mainContent {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Định dạng khung đăng nhập */
+#loginContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+#studentId {
+    padding: 10px;
+    font-size: 1.2em;
+    margin-right: 10px;
+    width: 300px;
+}
+
+#loginBtn {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#loginBtn:hover {
+    background-color: #0056b3;
+}
+
+/* Định dạng danh sách bài tập */
+#problemList {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+/* Mỗi bài tập */
+.problem-box {
+    padding: 10px 15px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.problem-box:hover {
+    background-color: #e0e0e0;
+}
+
+/* Khung nhập số bài và các nút chức năng */
+#topControls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+#topControls input,
+#topControls button {
+    padding: 10px;
+    font-size: 1em;
+}
+
+/* Khung chứa đề bài */
+#problemContainer {
+    margin-bottom: 20px;
+}
+
+#problemText {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 15px;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Các nút chức năng dưới đề bài */
+#bottomControls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+#bottomControls button {
+    padding: 12px 20px;
+    font-size: 1em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#bottomControls button:hover {
+    background-color: #0056b3;
+}
+
+/* Kết quả chấm bài */
+#result {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Upload ảnh bài làm */
+#studentImage {
+    margin-top: 20px;
+}
+
+/* Phần camera và ảnh chụp */
+#cameraAndImageContainer {
+    display: flex;
+    justify-content: space-between;
+    width: 66.66%;  /* Chiếm 2/3 chiều rộng màn hình */
+    margin-top: 20px;
+}
+
+/* Khung chứa video camera */
+#videoContainer {
+    width: 48%; /* Chiếm 50% chiều rộng */
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Video trong khung */
+#cameraStream {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+/* Nút chụp ảnh */
+#captureButton {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#captureButton:hover {
+    background-color: #0056b3;
+}
+
+/* Khung chứa ảnh đã chụp */
+#imageContainer {
+    width: 48%; /* Chiếm 50% chiều rộng */
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Ảnh đã chụp */
+#capturedImage {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    display: none; /* Ảnh ẩn khi chưa chụp */
+}
+
+/* Hiển thị lỗi */
+#errorMessage {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Thêm cho phần mobile */
+@media (max-width: 768px) {
+    #mainContent {
+        padding: 10px;
+    }
+
+    #topControls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #cameraAndImageContainer {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    #videoContainer,
+    #imageContainer {
+        width: 100%;
+    }
+}

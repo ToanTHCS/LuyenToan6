@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Chấm Bài Tự Động</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="loginContainer">
+        <h2>Đăng Nhập</h2>
+        <input type="text" id="studentId" placeholder="Nhập mã học sinh / giáo viên">
+        <button id="loginBtn">Đăng nhập</button>
+    </div>
+
+    <div id="mainContent" style="display: none;">
+        <h2>Danh Sách Bài Tập</h2>
+        <div id="problemList"></div>
+        
+        <h2>Đề Bài</h2>
+        <div id="problemText"></div>
+        
+        <input type="file" id="studentImage" accept="image/*">
+        <button id="submitBtn">Chấm bài</button>
+        <button id="similarProblemBtn">Bài tập tương tự</button>
+        <button id="hintBtn">Gợi ý</button>
+
+        <h2>Kết Quả Chấm Bài</h2>
+        <div id="result"></div>
+        
+        <h2>Tiến Độ Học Sinh</h2>
+        <p>Bài đã làm: <span id="completedExercises">0</span></p>
+        <p>Điểm trung bình: <span id="averageScore">0</span></p>
+        
+        <div id="teacherControls" style="display: none;">
+            <h2>Chức Năng Giáo Viên</h2>
+            <button id="summaryBtn">Tổng Kết Điểm</button>
+            <button id="clearProgressBtn">Xóa Tiến Trình</button>
+            <button id="manageStudentsBtn">Quản Lý Học Sinh</button>
+            <div id="summaryTable"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
