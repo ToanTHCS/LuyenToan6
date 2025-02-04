@@ -1,0 +1,9 @@
+{
+  "name": "LuyenToan6",
+  "version": "1.0.0",
+  "type": "module", 
+  "dependencies": {
+    "@octokit/rest": "^19.0.0",
+    "node-fetch": "^2.6.1"
+  }
+}
