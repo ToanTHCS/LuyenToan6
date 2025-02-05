@@ -1,12 +1,24 @@
-export default function handler(req, res) {
-    if (req.method === 'GET') {
-        const apiKey = process.env.API_GPT;  // Lấy API key từ biến môi trường
-        if (apiKey) {
-            return res.status(200).json({ apiKey });  // Trả về API key
-        } else {
-            return res.status(400).json({ error: 'API Key không tồn tại trong biến môi trường' });
+export default async function handler(req, res) {
+    if (req.method !== "GET") {
+        return res.status(405).json({ error: "Only GET method is allowed" });
+    }
+
+    try {
+        const apiKeys = [
+            process.env.API_K1, process.env.API_K2, process.env.API_K3,
+            process.env.API_K4, process.env.API_K5, process.env.API_K6,
+            process.env.API_K7, process.env.API_K8, process.env.API_K9,
+            process.env.API_K10
+        ].filter(key => key); // Lọc ra các API Key hợp lệ
+
+        if (apiKeys.length === 0) {
+            return res.status(500).json({ error: "No API keys available" });
         }
-    } else {
-        return res.status(405).json({ error: 'Method Not Allowed' });  // Chỉ hỗ trợ phương thức GET
+
+        return res.status(200).json({ apiKeys });
+    } catch (error) {
+        console.error("❌ Error retrieving API keys:", error);
+        return res.status(500).json({ error: "Failed to retrieve API keys" });
     }
 }
+module.exports = apiKeys;  // Đảm bảo bạn xuất apiKeys từ tệp này
