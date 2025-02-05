@@ -220,7 +220,7 @@ async function makeApiRequest(apiUrl, requestBody) {
 
 // Hàm gọi API GPT để chấm bài
 async function gradeWithGPT(base64Image, problemText, studentId) {
-    const apiUrl = '/api/grade'; // Đoạn mã này sẽ gọi API backend mà bạn định nghĩa
+    const apiUrl = '/api/get-api-keys';  // Gọi backend để lấy API key
 
     const promptText = `
     Học sinh: ${studentId}
@@ -247,22 +247,40 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
     };
 
     try {
-        const response = await fetch(apiUrl, {
+        // Lấy API key từ backend
+        const keyResponse = await fetch(apiUrl);
+        const keyData = await keyResponse.json();
+        const apiKey = keyData.apiKey;
+
+        if (!apiKey) {
+            throw new Error("Không thể lấy API key");
+        }
+
+        // Gửi yêu cầu tới OpenAI API với API key
+        const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
+                'Authorization': `Bearer ${apiKey}`,  // Thêm API key vào Authorization header
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(requestBody)
         });
 
-        const result = await response.json();
-        return result;  // Trả về kết quả từ backend
+        const result = await openAiResponse.json();
+
+        // Kiểm tra phản hồi từ API
+        if (!openAiResponse.ok) {
+            console.error("Lỗi API OpenAI:", result);
+            throw new Error("Không nhận được kết quả hợp lệ từ OpenAI");
+        }
+
+        return result;  // Trả về kết quả từ OpenAI
+
     } catch (error) {
-        console.error('Lỗi khi gọi API GPT:', error);
+        console.error("Lỗi khi gọi API GPT:", error);
         throw new Error("Đã xảy ra lỗi khi gọi API GPT.");
     }
 }
-
 document.getElementById("submitBtn").addEventListener("click", async () => {
     console.log("Nút chấm bài đã được nhấn");
 
