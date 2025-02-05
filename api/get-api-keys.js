@@ -1,3 +1,4 @@
+// api/get-api-keys.js (Sử dụng ESM)
 export default async function handler(req, res) {
     if (req.method !== "GET") {
         return res.status(405).json({ error: "Only GET method is allowed" });
@@ -21,4 +22,3 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Failed to retrieve API keys" });
     }
 }
-module.exports = apiKeys;  // Đảm bảo bạn xuất apiKeys từ tệp này
