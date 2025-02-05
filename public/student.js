@@ -222,7 +222,6 @@ async function makeApiRequest(apiUrl, requestBody) {
 async function gradeWithGPT(base64Image, problemText, studentId) {
     const apiUrl = 'https://api.openai.com/v1/completions';  // Endpoint GPT
 
-    // Prompt yêu cầu AI trả về đúng 6 phần dữ liệu
     const promptText = `
     Học sinh: ${studentId}
     Đề bài:
@@ -258,24 +257,35 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
         max_tokens: 1500,
         temperature: 0.5
     };
+
     const apiKey = apiKeys[0]; // Lấy API key duy nhất
+
     try {
+        // Gọi API OpenAI và truyền API key vào Authorization header
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${apiKey}`,  // Đảm bảo rằng API key được nối đúng với tiền tố 'Bearer '
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(requestBody)
         });
 
         const result = await response.json();
-        console.log(result);
-        return result;  // Xử lý kết quả ở đây
+        
+        // Kiểm tra kết quả trả về từ API
+        if (response.ok) {
+            console.log("API GPT Result:", result);  // Kiểm tra kết quả trả về từ API
+            return result;  // Trả về kết quả API
+        } else {
+            console.error("API GPT Error:", result);  // Hiển thị lỗi trả về từ API
+            throw new Error(result.error.message);
+        }
     } catch (error) {
-        console.error('Lỗi khi gọi API GPT:', error);
+        console.error('Lỗi khi gọi API GPT:', error);  // Kiểm tra lỗi khi gọi API
     }
 }
+
 document.getElementById("submitBtn").addEventListener("click", async () => {
     console.log("Nút chấm bài đã được nhấn");
 
