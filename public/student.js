@@ -8,23 +8,26 @@ let currentProblem = null; // Biến lưu bài tập hiện tại
 // Tải API keys từ server
 async function loadApiKeys() {
     try {
-        const response = await fetch('/api/get-api-keys'); // Gọi API get-api-keys
+        const response = await fetch('/api/get-api-keys');
         if (!response.ok) {
             throw new Error('Không thể tải API keys');
         }
         const data = await response.json();
-        apiKeys = data.apiKeys;  // Lấy dữ liệu API keys
-        console.log('API Keys:', apiKeys);
 
-        if (apiKeys.length === 0) {
-            console.error("Không có API keys hợp lệ.");
+        // Kiểm tra dữ liệu trước khi sử dụng
+        if (data && data.apiKey) {
+            apiKeys = [data.apiKey]; // Gán API key vào mảng apiKeys
+            console.log('API Key:', data.apiKey);
         } else {
-            console.log(`Có ${apiKeys.length} API keys hợp lệ.`);
+            throw new Error('Không có API key trong dữ liệu trả về');
         }
     } catch (error) {
         console.error('Lỗi khi tải API keys:', error);
     }
 }
+
+// Gọi hàm khi trang được tải
+loadApiKeys();
 
 // Hàm khởi tạo trang học sinh
 async function initStudentPage() {
