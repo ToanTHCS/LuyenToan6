@@ -1,5 +1,3 @@
-// Thay thế require bằng import
-import axios from 'axios';
 
 let currentKeyIndex = 0;  // Biến để theo dõi API key đang sử dụng
 let apiKeys = [];  // Biến lưu API keys
@@ -216,7 +214,6 @@ async function makeApiRequest(apiUrl, requestBody) {
     }
     throw new Error('All API keys exhausted.');
 }
-
 // Hàm gọi API Gemini để chấm bài
 async function gradeWithChatGPT(base64Image, problemText, studentId) {
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
