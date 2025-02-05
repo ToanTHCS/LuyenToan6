@@ -249,7 +249,7 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
     `;
 
     const requestBody = {
-        model: "gpt-3.5-turbo",  // Sử dụng mô hình GPT-3 thay vì GPT-4
+        model: "gpt-4o-mini",  // Sử dụng mô hình -4
         messages: [
             { role: "system", content: "Bạn là một chuyên gia toán học và giáo viên, giúp chấm điểm bài làm của học sinh." },
             { role: "user", content: promptText }
