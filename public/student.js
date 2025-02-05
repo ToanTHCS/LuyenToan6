@@ -8,25 +8,22 @@ let currentProblem = null; // Biến lưu bài tập hiện tại
 // Tải API key từ server (GPT, chỉ 1 API key)
 async function loadApiKeys() {
     try {
-        const response = await fetch('/api/get-api-keys'); // Gọi API để lấy API key GPT
+        const response = await fetch('/api/get-api-keys'); // Gọi API get-api-keys
         if (!response.ok) {
-            throw new Error('Không thể tải API key');
+            throw new Error('Không thể tải API keys');
         }
         const data = await response.json();
-        
-        if (data.apiKey) {
-            // GPT API - Chỉ lấy 1 API key duy nhất
-            apiKeys = [data.apiKey]; 
-            console.log('API Key (GPT):', apiKeys);
-        }
+        console.log("API Key:", data.apiKey);  // Kiểm tra API key
+        apiKeys = data.apiKey ? [data.apiKey] : [];  // Nếu key hợp lệ, lưu vào apiKeys
 
-        if (!apiKeys || apiKeys.length === 0) {
+        if (apiKeys.length === 0) {
             console.error("Không có API key hợp lệ.");
         } else {
             console.log(`Có ${apiKeys.length} API key hợp lệ.`);
         }
     } catch (error) {
         console.error('Lỗi khi tải API keys:', error);
+        alert("Không thể tải API key. Vui lòng kiểm tra lại cấu hình.");
     }
 }
 
@@ -268,14 +265,12 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
 
         const result = await openAiResponse.json();
 
-        // Kiểm tra phản hồi từ API
         if (!openAiResponse.ok) {
             console.error("Lỗi API OpenAI:", result);
             throw new Error("Không nhận được kết quả hợp lệ từ OpenAI");
         }
 
         return result;  // Trả về kết quả từ OpenAI
-
     } catch (error) {
         console.error("Lỗi khi gọi API GPT:", error);
         throw new Error("Đã xảy ra lỗi khi gọi API GPT.");
@@ -325,4 +320,3 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         document.getElementById("result").innerText = `Lỗi: ${error.message}`;
     }
 });
-
