@@ -281,6 +281,7 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
         throw new Error("Đã xảy ra lỗi khi gọi API GPT.");
     }
 }
+
 document.getElementById("submitBtn").addEventListener("click", async () => {
     console.log("Nút chấm bài đã được nhấn");
 
