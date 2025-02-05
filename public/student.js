@@ -217,13 +217,13 @@ const axios = require('axios');
 
 async function gradeWithChatGPT(base64Image, problemText, studentId) {
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
-    
+
     // Prompt yêu cầu AI trả về đúng 6 phần dữ liệu
     const promptText = `
     Học sinh: ${studentId}
     Đề bài:
     ${problemText}
-    
+
     Hãy thực hiện các bước sau:
     1. Nhận diện và gõ lại bài làm của học sinh từ hình ảnh thành văn bản một cách chính xác, tất cả công thức Toán viết dưới dạng Latex, bọc trong dấu $, không tự suy luận nội dung hình ảnh, chỉ gõ lại chính xác các nội dung nhận diện được từ hình ảnh.
     2. Giải bài toán và cung cấp lời giải chi tiết cho từng phần, lời giải phù hợp học sinh lớp 7 học theo chương trình 2018.
@@ -281,14 +281,13 @@ async function gradeWithChatGPT(base64Image, problemText, studentId) {
     try {
         const response = await axios.post(apiUrl, requestBody, {
             headers: {
-                'Authorization': `Bearer ${apiKey}`,  // Sử dụng API key lấy từ endpoint
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             }
         });
 
         const result = response.data.choices[0].message.content;
 
-        // Sử dụng biểu thức chính quy để trích xuất từng phần dữ liệu
         const studentAnswer = result.match(/---Bài làm của học sinh---\n([\s\S]*?)\n---Lời giải chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
         const detailedSolution = result.match(/---Lời giải chi tiết---\n([\s\S]*?)\n---Chấm điểm chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
         const gradingDetails = result.match(/---Chấm điểm chi tiết---\n([\s\S]*?)\n---Điểm số---/)?.[1]?.trim() || "Không thể xử lý";
@@ -319,15 +318,18 @@ async function gradeWithChatGPT(base64Image, problemText, studentId) {
 }
 // Hàm khi nhấn nút "Chấm bài"
 document.getElementById("submitBtn").addEventListener("click", async () => {
+    // Kiểm tra xem bài tập đã được chọn chưa
     if (!currentProblem) {
         alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
         return;
     }
 
+    // Lấy thông tin học sinh và bài tập
     const studentId = localStorage.getItem("studentId");
     const problemText = document.getElementById("problemText").innerText.trim();
     const studentFileInput = document.getElementById("studentImage");
 
+    // Kiểm tra xem đề bài đã có chưa
     if (!problemText) {
         alert("⚠ Đề bài chưa được tải.");
         return;
@@ -335,22 +337,25 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 
     let base64Image = null;
 
+    // Kiểm tra xem học sinh có tải ảnh lên không
     if (!base64Image && studentFileInput.files.length === 0) {
         alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
         return;
     }
 
+    // Nếu có file ảnh, chuyển đổi thành base64
     if (!base64Image && studentFileInput.files.length > 0) {
         base64Image = await getBase64(studentFileInput.files[0]);
     }
 
     try {
+        // Hiển thị trạng thái "đang chấm bài"
         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
 
-        // Gọi lại hàm gradeWithChatGPT đã sửa đổi
+        // Gọi hàm gradeWithChatGPT để chấm bài
         const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = await gradeWithChatGPT(base64Image, problemText, studentId);
 
-        // Hiển thị kết quả chấm điểm
+        // Hiển thị kết quả chấm điểm vào giao diện
         let resultHTML = `
             <strong>Bài làm của học sinh:</strong><br/>${studentAnswer}<br/><br/>
             <strong>Lời giải chi tiết:</strong><br/>${detailedSolution}<br/><br/>
@@ -364,16 +369,21 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         document.getElementById("result").innerHTML = resultHTML;
         MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
 
-        // Lưu tiến trình bài làm
+        // Lưu tiến trình của học sinh
         await saveProgress(studentId, score);
 
+        // Thông báo kết quả chấm bài
         alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
+
+        // Cập nhật trạng thái bài đã hoàn thành
         progressData[currentProblem.index] = true;
         updateProgressUI();
     } catch (error) {
+        // Xử lý lỗi nếu có
         console.error("❌ Lỗi khi chấm bài:", error);
         document.getElementById("result").innerText = `Lỗi: ${error.message}`;
     }
 });
+
 
 
