@@ -273,18 +273,21 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
 
         const result = await response.json();
         
-        // Kiểm tra kết quả trả về từ API
-        if (response.ok) {
-            console.log("API GPT Result:", result);  // Kiểm tra kết quả trả về từ API
-            return result;  // Trả về kết quả API
-        } else {
-            console.error("API GPT Error:", result);  // Hiển thị lỗi trả về từ API
-            throw new Error(result.error.message);
+        // Kiểm tra phản hồi từ API
+        if (!response.ok || !result.choices || result.choices.length === 0) {
+            console.error("API GPT Error:", result);  // Hiển thị lỗi nếu phản hồi không hợp lệ
+            throw new Error("Không nhận được kết quả hợp lệ từ API.");
         }
+
+        // Kiểm tra cấu trúc dữ liệu và trả về kết quả
+        console.log("API GPT Result:", result);
+        return result.choices[0].message.content;  // Trả về nội dung kết quả từ OpenAI
     } catch (error) {
-        console.error('Lỗi khi gọi API GPT:', error);  // Kiểm tra lỗi khi gọi API
+        console.error('Lỗi khi gọi API GPT:', error);
+        throw new Error("Đã xảy ra lỗi khi gọi API GPT.");
     }
 }
+
 document.getElementById("submitBtn").addEventListener("click", async () => {
     console.log("Nút chấm bài đã được nhấn");
 
