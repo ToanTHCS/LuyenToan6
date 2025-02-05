@@ -1,3 +1,6 @@
+// Thay thế require bằng import
+import axios from 'axios';
+
 let currentKeyIndex = 0;  // Biến để theo dõi API key đang sử dụng
 let apiKeys = [];  // Biến lưu API keys
 
@@ -8,26 +11,23 @@ let currentProblem = null; // Biến lưu bài tập hiện tại
 // Tải API keys từ server
 async function loadApiKeys() {
     try {
-        const response = await fetch('/api/get-api-keys');
+        const response = await fetch('/api/get-api-keys'); // Gọi API get-api-keys
         if (!response.ok) {
             throw new Error('Không thể tải API keys');
         }
         const data = await response.json();
+        apiKeys = [data.apiKey];  // Gán API key vào mảng (mặc dù bạn chỉ có 1 key)
+        console.log('API Keys:', apiKeys);
 
-        // Kiểm tra dữ liệu trước khi sử dụng
-        if (data && data.apiKey) {
-            apiKeys = [data.apiKey]; // Gán API key vào mảng apiKeys
-            console.log('API Key:', data.apiKey);
+        if (apiKeys.length === 0) {
+            console.error("Không có API keys hợp lệ.");
         } else {
-            throw new Error('Không có API key trong dữ liệu trả về');
+            console.log(`Có ${apiKeys.length} API keys hợp lệ.`);
         }
     } catch (error) {
         console.error('Lỗi khi tải API keys:', error);
     }
 }
-
-// Gọi hàm khi trang được tải
-loadApiKeys();
 
 // Hàm khởi tạo trang học sinh
 async function initStudentPage() {
@@ -188,6 +188,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     await loadApiKeys(); // Tải API keys khi trang được tải
     await initStudentPage();
 });
+
 // Hàm gửi yêu cầu API với API key
 async function makeApiRequest(apiUrl, requestBody) {
     let attempts = 0;
@@ -215,9 +216,8 @@ async function makeApiRequest(apiUrl, requestBody) {
     }
     throw new Error('All API keys exhausted.');
 }
-// Hàm gọi API Gemini để chấm bài
-const axios = require('axios');
 
+// Hàm gọi API Gemini để chấm bài
 async function gradeWithChatGPT(base64Image, problemText, studentId) {
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
 
@@ -319,74 +319,3 @@ async function gradeWithChatGPT(base64Image, problemText, studentId) {
         };
     }
 }
-// Hàm khi nhấn nút "Chấm bài"
-document.getElementById("submitBtn").addEventListener("click", async () => {
-    // Kiểm tra xem bài tập đã được chọn chưa
-    if (!currentProblem) {
-        alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
-        return;
-    }
-
-    // Lấy thông tin học sinh và bài tập
-    const studentId = localStorage.getItem("studentId");
-    const problemText = document.getElementById("problemText").innerText.trim();
-    const studentFileInput = document.getElementById("studentImage");
-
-    // Kiểm tra xem đề bài đã có chưa
-    if (!problemText) {
-        alert("⚠ Đề bài chưa được tải.");
-        return;
-    }
-
-    let base64Image = null;
-
-    // Kiểm tra xem học sinh có tải ảnh lên không
-    if (!base64Image && studentFileInput.files.length === 0) {
-        alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
-        return;
-    }
-
-    // Nếu có file ảnh, chuyển đổi thành base64
-    if (!base64Image && studentFileInput.files.length > 0) {
-        base64Image = await getBase64(studentFileInput.files[0]);
-    }
-
-    try {
-        // Hiển thị trạng thái "đang chấm bài"
-        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
-
-        // Gọi hàm gradeWithChatGPT để chấm bài
-        const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = await gradeWithChatGPT(base64Image, problemText, studentId);
-
-        // Hiển thị kết quả chấm điểm vào giao diện
-        let resultHTML = `
-            <strong>Bài làm của học sinh:</strong><br/>${studentAnswer}<br/><br/>
-            <strong>Lời giải chi tiết:</strong><br/>${detailedSolution}<br/><br/>
-            <strong>Chấm điểm chi tiết:</strong><br/>${gradingDetails}<br/><br/>
-            <strong>Điểm số:</strong> ${score}/10<br/><br/>
-            <strong>Nhận xét:</strong><br/>${feedback}<br/><br/>
-            <strong>Đề xuất cải thiện:</strong><br/>${suggestions}
-        `;
-
-        // Hiển thị kết quả trong UI
-        document.getElementById("result").innerHTML = resultHTML;
-        MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
-
-        // Lưu tiến trình của học sinh
-        await saveProgress(studentId, score);
-
-        // Thông báo kết quả chấm bài
-        alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
-
-        // Cập nhật trạng thái bài đã hoàn thành
-        progressData[currentProblem.index] = true;
-        updateProgressUI();
-    } catch (error) {
-        // Xử lý lỗi nếu có
-        console.error("❌ Lỗi khi chấm bài:", error);
-        document.getElementById("result").innerText = `Lỗi: ${error.message}`;
-    }
-});
-
-
-
