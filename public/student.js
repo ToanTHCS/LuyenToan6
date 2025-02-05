@@ -258,7 +258,6 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
         max_tokens: 1500,
         temperature: 0.5
     };
-
     const apiKey = apiKeys[0]; // Lấy API key duy nhất
     try {
         const response = await fetch(apiUrl, {
