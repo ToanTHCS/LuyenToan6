@@ -220,7 +220,7 @@ async function makeApiRequest(apiUrl, requestBody) {
 
 // Hàm gọi API GPT để chấm bài
 async function gradeWithGPT(base64Image, problemText, studentId) {
-    const apiUrl = 'https://api.openai.com/v1/completions';  // Endpoint GPT
+    const apiUrl = '/api/grade'; // Đoạn mã này sẽ gọi API backend mà bạn định nghĩa
 
     const promptText = `
     Học sinh: ${studentId}
@@ -234,22 +234,10 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
     4. Chấm điểm bài làm của học sinh trên thang điểm 10, cho 0 điểm với bài giải không đúng yêu cầu đề bài. Giải thích chi tiết cách tính điểm cho từng phần.
     5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
     6. Kiểm tra lại kết quả chấm điểm và đảm bảo tính nhất quán giữa bài làm, lời giải, và điểm số.
-    
-    🚨 KẾT QUẢ PHẢI TRẢ VỀ ĐÚNG 6 DÒNG, THEO ĐỊNH DẠNG SAU:
-    1. Bài làm của học sinh: [Bài làm được nhận diện từ hình ảnh]
-    2. Lời giải chi tiết: [Lời giải từng bước]
-    3. Chấm điểm chi tiết: [Giải thích cách chấm điểm]
-    4. Điểm số: [Điểm trên thang điểm 10]
-    5. Nhận xét: [Nhận xét chi tiết]
-    6. Đề xuất cải thiện: [Các đề xuất cụ thể]
-
-    ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".  
-    ❗Điểm số phải là số từ 0 đến 10, có thể có một chữ số thập phân.
-    ❗Nếu có sự không nhất quán giữa bài làm và điểm số, hãy giải thích rõ lý do.
     `;
 
     const requestBody = {
-        model: "gpt-4o-mini",  // Sử dụng mô hình -4
+        model: "gpt-4",  // Sử dụng mô hình GPT-4
         messages: [
             { role: "system", content: "Bạn là một chuyên gia toán học và giáo viên, giúp chấm điểm bài làm của học sinh." },
             { role: "user", content: promptText }
@@ -258,29 +246,17 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
         temperature: 0.5
     };
 
-    const apiKey = apiKeys[0]; // Lấy API key duy nhất
-
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${apiKey}`,  // Đảm bảo rằng API key được nối đúng với tiền tố 'Bearer '
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(requestBody)
         });
 
         const result = await response.json();
-        
-        // Kiểm tra phản hồi từ API
-        if (!response.ok || !result.choices || result.choices.length === 0) {
-            console.error("API GPT Error:", result);  // Hiển thị lỗi nếu phản hồi không hợp lệ
-            throw new Error("Không nhận được kết quả hợp lệ từ API.");
-        }
-
-        // Kiểm tra cấu trúc dữ liệu và trả về kết quả
-        console.log("API GPT Result:", result);
-        return result.choices[0].message.content;  // Trả về nội dung kết quả từ OpenAI
+        return result;  // Trả về kết quả từ backend
     } catch (error) {
         console.error('Lỗi khi gọi API GPT:', error);
         throw new Error("Đã xảy ra lỗi khi gọi API GPT.");
