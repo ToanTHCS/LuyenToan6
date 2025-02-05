@@ -1,11 +1,11 @@
 let currentKeyIndex = 0;  // Biến để theo dõi API key đang sử dụng
-let apiKeys = [];  // Biến lưu API key duy nhất
+let apiKeys = [];  // Biến lưu API keys
 
 let base64Image = ""; // Biến toàn cục để lưu ảnh bài làm
 let progressData = {}; // Biến lưu tiến trình học sinh
 let currentProblem = null; // Biến lưu bài tập hiện tại
 
-// Tải API key từ server (GPT, chỉ 1 API key)
+// Tải API keys từ server
 async function loadApiKeys() {
     try {
         const response = await fetch('/api/get-api-keys'); // Gọi API get-api-keys
@@ -13,17 +13,16 @@ async function loadApiKeys() {
             throw new Error('Không thể tải API keys');
         }
         const data = await response.json();
-        console.log("API Key:", data.apiKey);  // Kiểm tra API key
-        apiKeys = data.apiKey ? [data.apiKey] : [];  // Nếu key hợp lệ, lưu vào apiKeys
+        apiKeys = data.apiKeys;  // Lấy dữ liệu API keys
+        console.log('API Keys:', apiKeys);
 
         if (apiKeys.length === 0) {
-            console.error("Không có API key hợp lệ.");
+            console.error("Không có API keys hợp lệ.");
         } else {
-            console.log(`Có ${apiKeys.length} API key hợp lệ.`);
+            console.log(`Có ${apiKeys.length} API keys hợp lệ.`);
         }
     } catch (error) {
         console.error('Lỗi khi tải API keys:', error);
-        alert("Không thể tải API key. Vui lòng kiểm tra lại cấu hình.");
     }
 }
 
@@ -175,7 +174,7 @@ function getBase64(file) {
     });
 }
 
-// Hàm lấy API key duy nhất từ danh sách
+// Hàm lấy API key tiếp theo từ danh sách
 function getNextApiKey() {
     const apiKey = apiKeys[currentKeyIndex];
     currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
@@ -183,15 +182,14 @@ function getNextApiKey() {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-    await loadApiKeys(); // Tải API key khi trang được tải
+    await loadApiKeys(); // Tải API keys khi trang được tải
     await initStudentPage();
 });
-
 // Hàm gửi yêu cầu API với API key
 async function makeApiRequest(apiUrl, requestBody) {
     let attempts = 0;
     while (attempts < apiKeys.length) {
-        const apiKey = getNextApiKey(); // Lấy API key duy nhất từ danh sách
+        const apiKey = getNextApiKey(); // Lấy API key từ danh sách
         try {
             const response = await fetch(`${apiUrl}?key=${apiKey}`, {
                 method: 'POST',
@@ -214,16 +212,16 @@ async function makeApiRequest(apiUrl, requestBody) {
     }
     throw new Error('All API keys exhausted.');
 }
-
-// Hàm gọi API GPT để chấm bài
-async function gradeWithGPT(base64Image, problemText, studentId) {
-    const apiUrl = '/api/get-api-keys';  // Gọi backend để lấy API key
-
+// Hàm gọi API Gemini để chấm bài
+async function gradeWithGemini(base64Image, problemText, studentId) {
+    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
+    
+    // Prompt yêu cầu AI trả về đúng 6 phần dữ liệu, có thể có nhiều dòng
     const promptText = `
     Học sinh: ${studentId}
     Đề bài:
     ${problemText}
-
+    
     Hãy thực hiện các bước sau:
     1. Nhận diện và gõ lại bài làm của học sinh từ hình ảnh thành văn bản một cách chính xác, tất cả công thức Toán viết dưới dạng Latex, bọc trong dấu $, không tự suy luận nội dung hình ảnh, chỉ gõ lại chính xác các nội dung nhận diện được từ hình ảnh.
     2. Giải bài toán và cung cấp lời giải chi tiết cho từng phần, lời giải phù hợp học sinh lớp 7 học theo chương trình 2018.
@@ -231,55 +229,78 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
     4. Chấm điểm bài làm của học sinh trên thang điểm 10, cho 0 điểm với bài giải không đúng yêu cầu đề bài. Giải thích chi tiết cách tính điểm cho từng phần.
     5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
     6. Kiểm tra lại kết quả chấm điểm và đảm bảo tính nhất quán giữa bài làm, lời giải, và điểm số.
+
+    🚨 KẾT QUẢ PHẢI TRẢ VỀ THEO ĐỊNH DẠNG SAU:
+    ---Bài làm của học sinh---
+    [Bài làm được nhận diện từ hình ảnh]
+    ---Lời giải chi tiết---
+    [Lời giải từng bước]
+    ---Chấm điểm chi tiết---
+    [Giải thích cách chấm điểm]
+    ---Điểm số---
+    [Điểm trên thang điểm 10]
+    ---Nhận xét---
+    [Nhận xét chi tiết, có thể nhiều dòng]
+    ---Đề xuất cải thiện---
+    [Các đề xuất cụ thể, có thể nhiều dòng]
+
+    ❗Điểm số phải là số từ 0 đến 10, có thể có một chữ số thập phân.
+    ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".
+    ❗Nếu có sự không nhất quán giữa bài làm và điểm số, hãy giải thích rõ lý do.
     `;
 
     const requestBody = {
-        model: "gpt-4",  // Sử dụng mô hình GPT-4
-        messages: [
-            { role: "system", content: "Bạn là một chuyên gia toán học và giáo viên, giúp chấm điểm bài làm của học sinh." },
-            { role: "user", content: promptText }
-        ],
-        max_tokens: 1500,
-        temperature: 0.5
+        contents: [
+            {
+                parts: [
+                    { text: promptText },
+                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+                ]
+            }
+        ]
     };
 
     try {
-        // Lấy API key từ backend
-        const keyResponse = await fetch(apiUrl);
-        const keyData = await keyResponse.json();
-        const apiKey = keyData.apiKey;
+        const data = await makeApiRequest(apiUrl, requestBody);
+        const response = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (!apiKey) {
-            throw new Error("Không thể lấy API key");
+        if (!response) {
+            throw new Error('Không nhận được phản hồi hợp lệ từ API');
         }
 
-        // Gửi yêu cầu tới OpenAI API với API key
-        const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,  // Thêm API key vào Authorization header
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
+        // Sử dụng biểu thức chính quy để trích xuất từng phần dữ liệu, đảm bảo lấy đầy đủ nội dung của từng mục
+        const studentAnswer = response.match(/---Bài làm của học sinh---\n([\s\S]*?)\n---Lời giải chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
+        const detailedSolution = response.match(/---Lời giải chi tiết---\n([\s\S]*?)\n---Chấm điểm chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
+        const gradingDetails = response.match(/---Chấm điểm chi tiết---\n([\s\S]*?)\n---Điểm số---/)?.[1]?.trim() || "Không thể xử lý";
+        const score = parseFloat(response.match(/---Điểm số---\n([\d.]+)/)?.[1]) || 0;
+        const feedback = response.match(/---Nhận xét---\n([\s\S]*?)\n---Đề xuất cải thiện---/)?.[1]?.trim() || "Không thể xử lý";
+        const suggestions = response.match(/---Đề xuất cải thiện---\n([\s\S]*)/)?.[1]?.trim() || "Không thể xử lý";
 
-        const result = await openAiResponse.json();
+        return {
+            studentAnswer,
+            detailedSolution,
+            gradingDetails,
+            score,
+            feedback,
+            suggestions
+        };
 
-        if (!openAiResponse.ok) {
-            console.error("Lỗi API OpenAI:", result);
-            throw new Error("Không nhận được kết quả hợp lệ từ OpenAI");
-        }
-
-        return result;  // Trả về kết quả từ OpenAI
     } catch (error) {
-        console.error("Lỗi khi gọi API GPT:", error);
-        throw new Error("Đã xảy ra lỗi khi gọi API GPT.");
+        console.error('Lỗi:', error);
+        return {
+            studentAnswer: "Lỗi xử lý",
+            detailedSolution: "Lỗi xử lý",
+            gradingDetails: "Lỗi xử lý",
+            score: 0,
+            feedback: `Đã xảy ra lỗi: ${error.message}`,
+            suggestions: "Lỗi xử lý"
+        };
     }
 }
 
-document.getElementById("submitBtn").addEventListener("click", async () => {
-    console.log("Nút chấm bài đã được nhấn");
 
+// Hàm khi nhấn nút "Chấm bài"
+document.getElementById("submitBtn").addEventListener("click", async () => {
     if (!currentProblem) {
         alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
         return;
@@ -304,9 +325,9 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     }
 
     try {
-        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
-        // Gọi lại hàm gradeWithGPT đã có
-        const { studentAnswer, feedback, score } = await gradeWithGPT(base64Image, problemText, studentId);
+         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
+        // Gọi lại hàm gradeWithGemini đã có
+        const { studentAnswer, feedback, score } = await gradeWithGemini(base64Image, problemText, studentId);
         await saveProgress(studentId, score);
 
         document.getElementById("result").innerHTML = feedback;
@@ -320,3 +341,6 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         document.getElementById("result").innerText = `Lỗi: ${error.message}`;
     }
 });
+
+
+
