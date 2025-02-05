@@ -1,4 +1,3 @@
-
 let currentKeyIndex = 0;  // Biến để theo dõi API key đang sử dụng
 let apiKeys = [];  // Biến lưu API keys
 
@@ -14,7 +13,7 @@ async function loadApiKeys() {
             throw new Error('Không thể tải API keys');
         }
         const data = await response.json();
-        apiKeys = [data.apiKey];  // Gán API key vào mảng (mặc dù bạn chỉ có 1 key)
+        apiKeys = data.apiKeys;  // Lấy dữ liệu API keys
         console.log('API Keys:', apiKeys);
 
         if (apiKeys.length === 0) {
@@ -214,16 +213,17 @@ async function makeApiRequest(apiUrl, requestBody) {
     }
     throw new Error('All API keys exhausted.');
 }
-// Hàm gọi API Gemini để chấm bài
-async function gradeWithChatGPT(base64Image, problemText, studentId) {
-    const apiUrl = 'https://api.openai.com/v1/chat/completions';
 
-    // Prompt yêu cầu AI trả về đúng 6 phần dữ liệu
+// Hàm gọi API Gemini để chấm bài
+async function gradeWithGemini(base64Image, problemText, studentId) {
+    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
+    
+    // Prompt yêu cầu AI trả về đúng 6 dòng
     const promptText = `
     Học sinh: ${studentId}
     Đề bài:
     ${problemText}
-
+    
     Hãy thực hiện các bước sau:
     1. Nhận diện và gõ lại bài làm của học sinh từ hình ảnh thành văn bản một cách chính xác, tất cả công thức Toán viết dưới dạng Latex, bọc trong dấu $, không tự suy luận nội dung hình ảnh, chỉ gõ lại chính xác các nội dung nhận diện được từ hình ảnh.
     2. Giải bài toán và cung cấp lời giải chi tiết cho từng phần, lời giải phù hợp học sinh lớp 7 học theo chương trình 2018.
@@ -231,69 +231,49 @@ async function gradeWithChatGPT(base64Image, problemText, studentId) {
     4. Chấm điểm bài làm của học sinh trên thang điểm 10, cho 0 điểm với bài giải không đúng yêu cầu đề bài. Giải thích chi tiết cách tính điểm cho từng phần.
     5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
     6. Kiểm tra lại kết quả chấm điểm và đảm bảo tính nhất quán giữa bài làm, lời giải, và điểm số.
+    
+    🚨 KẾT QUẢ PHẢI TRẢ VỀ ĐÚNG 6 DÒNG, THEO ĐỊNH DẠNG SAU:
+    1. Bài làm của học sinh: [Bài làm được nhận diện từ hình ảnh]
+    2. Lời giải chi tiết: [Lời giải từng bước]
+    3. Chấm điểm chi tiết: [Giải thích cách chấm điểm]
+    4. Điểm số: [Điểm trên thang điểm 10]
+    5. Nhận xét: [Nhận xét chi tiết]
+    6. Đề xuất cải thiện: [Các đề xuất cụ thể]
 
-    🚨 KẾT QUẢ PHẢI TRẢ VỀ THEO ĐỊNH DẠNG SAU:
-    ---Bài làm của học sinh---
-    [Bài làm được nhận diện từ hình ảnh]
-    ---Lời giải chi tiết---
-    [Lời giải từng bước]
-    ---Chấm điểm chi tiết---
-    [Giải thích cách chấm điểm]
-    ---Điểm số---
-    [Điểm trên thang điểm 10]
-    ---Nhận xét---
-    [Nhận xét chi tiết, có thể nhiều dòng]
-    ---Đề xuất cải thiện---
-    [Các đề xuất cụ thể, có thể nhiều dòng]
-
+    ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".  
     ❗Điểm số phải là số từ 0 đến 10, có thể có một chữ số thập phân.
-    ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".
     ❗Nếu có sự không nhất quán giữa bài làm và điểm số, hãy giải thích rõ lý do.
     `;
-    
-    // Lấy API key từ endpoint /api/get-api-keys
-    let apiKey;
-    try {
-        const apiKeyResponse = await axios.get('/api/get-api-keys');
-        apiKey = apiKeyResponse.data.apiKey;
-    } catch (error) {
-        console.error('Lỗi khi lấy API key:', error);
-        return {
-            studentAnswer: "Lỗi xử lý",
-            detailedSolution: "Lỗi xử lý",
-            gradingDetails: "Lỗi xử lý",
-            score: 0,
-            feedback: "Không thể lấy API key.",
-            suggestions: "Lỗi xử lý"
-        };
-    }
 
     const requestBody = {
-        model: "gpt-4",
-        messages: [
-            { role: "system", content: "Bạn là một chuyên gia toán học và giáo viên, giúp chấm điểm bài làm của học sinh." },
-            { role: "user", content: promptText }
-        ],
-        max_tokens: 1500,
-        temperature: 0.5
+        contents: [
+            {
+                parts: [
+                    { text: promptText },
+                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+                ]
+            }
+        ]
     };
 
     try {
-        const response = await axios.post(apiUrl, requestBody, {
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const data = await makeApiRequest(apiUrl, requestBody);
+        const response = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!response) {
+            throw new Error('Không nhận được phản hồi hợp lệ từ API');
+        }
 
-        const result = response.data.choices[0].message.content;
+        // Chia kết quả thành các dòng riêng biệt
+        const lines = response.split("\n").map(line => line.trim()).filter(line => line !== "");
 
-        const studentAnswer = result.match(/---Bài làm của học sinh---\n([\s\S]*?)\n---Lời giải chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
-        const detailedSolution = result.match(/---Lời giải chi tiết---\n([\s\S]*?)\n---Chấm điểm chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
-        const gradingDetails = result.match(/---Chấm điểm chi tiết---\n([\s\S]*?)\n---Điểm số---/)?.[1]?.trim() || "Không thể xử lý";
-        const score = parseFloat(result.match(/---Điểm số---\n([\d.]+)/)?.[1]) || 0;
-        const feedback = result.match(/---Nhận xét---\n([\s\S]*?)\n---Đề xuất cải thiện---/)?.[1]?.trim() || "Không thể xử lý";
-        const suggestions = result.match(/---Đề xuất cải thiện---\n([\s\S]*)/)?.[1]?.trim() || "Không thể xử lý";
+        // Đảm bảo có đủ 6 dòng, nếu không thì gán giá trị mặc định
+        const studentAnswer = lines[0]?.replace("Bài làm của học sinh:", "").trim() || "Không thể xử lý";
+        const detailedSolution = lines[1]?.replace("Lời giải chi tiết:", "").trim() || "Không thể xử lý";
+        const gradingDetails = lines[2]?.replace("Chấm điểm chi tiết:", "").trim() || "Không thể xử lý";
+        const score = parseFloat(lines[3]?.replace("Điểm số:", "").trim()) || 0;
+        const feedback = lines[4]?.replace("Nhận xét:", "").trim() || "Không thể xử lý";
+        const suggestions = lines[5]?.replace("Đề xuất cải thiện:", "").trim() || "Không thể xử lý";
 
         return {
             studentAnswer,
@@ -316,3 +296,46 @@ async function gradeWithChatGPT(base64Image, problemText, studentId) {
         };
     }
 }
+
+// Hàm khi nhấn nút "Chấm bài"
+document.getElementById("submitBtn").addEventListener("click", async () => {
+    if (!currentProblem) {
+        alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
+        return;
+    }
+
+    const studentId = localStorage.getItem("studentId");
+    const problemText = document.getElementById("problemText").innerText.trim();
+    const studentFileInput = document.getElementById("studentImage");
+
+    if (!problemText) {
+        alert("⚠ Đề bài chưa được tải.");
+        return;
+    }
+
+    if (!base64Image && studentFileInput.files.length === 0) {
+        alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
+        return;
+    }
+
+    if (!base64Image && studentFileInput.files.length > 0) {
+        base64Image = await getBase64(studentFileInput.files[0]);
+    }
+
+    try {
+         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
+        // Gọi lại hàm gradeWithGemini đã có
+        const { studentAnswer, feedback, score } = await gradeWithGemini(base64Image, problemText, studentId);
+        await saveProgress(studentId, score);
+
+        document.getElementById("result").innerHTML = feedback;
+        MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
+
+        alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
+        progressData[currentProblem.index] = true;
+        updateProgressUI();
+    } catch (error) {
+        console.error("❌ Lỗi khi chấm bài:", error);
+        document.getElementById("result").innerText = `Lỗi: ${error.message}`;
+    }
+});
