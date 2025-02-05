@@ -333,6 +333,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         return;
     }
 
+    let base64Image = null;
+
     if (!base64Image && studentFileInput.files.length === 0) {
         alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
         return;
@@ -343,13 +345,27 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     }
 
     try {
-         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
-        // Gọi lại hàm gradeWithGemini đã có
-        const { studentAnswer, feedback, score } = await gradeWithGemini(base64Image, problemText, studentId);
-        await saveProgress(studentId, score);
+        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
 
-        document.getElementById("result").innerHTML = feedback;
+        // Gọi lại hàm gradeWithChatGPT đã sửa đổi
+        const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = await gradeWithChatGPT(base64Image, problemText, studentId);
+
+        // Hiển thị kết quả chấm điểm
+        let resultHTML = `
+            <strong>Bài làm của học sinh:</strong><br/>${studentAnswer}<br/><br/>
+            <strong>Lời giải chi tiết:</strong><br/>${detailedSolution}<br/><br/>
+            <strong>Chấm điểm chi tiết:</strong><br/>${gradingDetails}<br/><br/>
+            <strong>Điểm số:</strong> ${score}/10<br/><br/>
+            <strong>Nhận xét:</strong><br/>${feedback}<br/><br/>
+            <strong>Đề xuất cải thiện:</strong><br/>${suggestions}
+        `;
+
+        // Hiển thị kết quả trong UI
+        document.getElementById("result").innerHTML = resultHTML;
         MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
+
+        // Lưu tiến trình bài làm
+        await saveProgress(studentId, score);
 
         alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
         progressData[currentProblem.index] = true;
@@ -359,6 +375,5 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         document.getElementById("result").innerText = `Lỗi: ${error.message}`;
     }
 });
-
 
 
