@@ -216,7 +216,6 @@ async function makeApiRequest(apiUrl, requestBody) {
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
     
-    // Prompt yêu cầu AI trả về đúng 6 dòng
     const promptText = `
     Học sinh: ${studentId}
     Đề bài:
@@ -266,8 +265,8 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
             throw new Error('Không nhận được phản hồi hợp lệ từ API');
         }
 
-        // Chia kết quả thành các dòng riêng biệt
-        const lines = response.split("\n").map(line => line.trim()).filter(line => line !== "");
+        // Sử dụng regex để tách mỗi phần theo số thứ tự (1., 2., 3., ...)
+        const lines = response.split(/\d+\.\s/).map(line => line.trim()).filter(line => line !== "");
 
         // Đảm bảo có đủ 6 dòng, nếu không thì gán giá trị mặc định
         const studentAnswer = lines[0]?.replace("Bài làm của học sinh:", "").trim() || "Không thể xử lý";
@@ -298,7 +297,6 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
         };
     }
 }
-
 // Hàm khi nhấn nút "Chấm bài"
 document.getElementById("submitBtn").addEventListener("click", async () => {
     if (!currentProblem) {
