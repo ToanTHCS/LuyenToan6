@@ -276,3 +276,47 @@ async function gradeWithGPT(base64Image, problemText, studentId) {
         console.error('Lỗi khi gọi API GPT:', error);
     }
 }
+document.getElementById("submitBtn").addEventListener("click", async () => {
+    console.log("Nút chấm bài đã được nhấn");
+
+    if (!currentProblem) {
+        alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
+        return;
+    }
+
+    const studentId = localStorage.getItem("studentId");
+    const problemText = document.getElementById("problemText").innerText.trim();
+    const studentFileInput = document.getElementById("studentImage");
+
+    if (!problemText) {
+        alert("⚠ Đề bài chưa được tải.");
+        return;
+    }
+
+    if (!base64Image && studentFileInput.files.length === 0) {
+        alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
+        return;
+    }
+
+    if (!base64Image && studentFileInput.files.length > 0) {
+        base64Image = await getBase64(studentFileInput.files[0]);
+    }
+
+    try {
+        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
+        // Gọi lại hàm gradeWithGPT đã có
+        const { studentAnswer, feedback, score } = await gradeWithGPT(base64Image, problemText, studentId);
+        await saveProgress(studentId, score);
+
+        document.getElementById("result").innerHTML = feedback;
+        MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
+
+        alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
+        progressData[currentProblem.index] = true;
+        updateProgressUI();
+    } catch (error) {
+        console.error("❌ Lỗi khi chấm bài:", error);
+        document.getElementById("result").innerText = `Lỗi: ${error.message}`;
+    }
+});
+
