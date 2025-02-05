@@ -256,6 +256,10 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
 
     try {
         const data = await makeApiRequest(apiUrl, requestBody);
+
+        // Log toàn bộ dữ liệu trả về từ API trước khi xử lý
+        console.log("Full API response:", JSON.stringify(data, null, 2));
+
         const response = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!response) {
