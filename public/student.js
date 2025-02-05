@@ -213,10 +213,12 @@ async function makeApiRequest(apiUrl, requestBody) {
     throw new Error('All API keys exhausted.');
 }
 // Hàm gọi API Gemini để chấm bài
-async function gradeWithGemini(base64Image, problemText, studentId) {
-    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
+const axios = require('axios');
+
+async function gradeWithChatGPT(base64Image, problemText, studentId) {
+    const apiUrl = 'https://api.openai.com/v1/chat/completions';
     
-    // Prompt yêu cầu AI trả về đúng 6 phần dữ liệu, có thể có nhiều dòng
+    // Prompt yêu cầu AI trả về đúng 6 phần dữ liệu
     const promptText = `
     Học sinh: ${studentId}
     Đề bài:
@@ -248,33 +250,51 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".
     ❗Nếu có sự không nhất quán giữa bài làm và điểm số, hãy giải thích rõ lý do.
     `;
+    
+    // Lấy API key từ endpoint /api/get-api-keys
+    let apiKey;
+    try {
+        const apiKeyResponse = await axios.get('/api/get-api-keys');
+        apiKey = apiKeyResponse.data.apiKey;
+    } catch (error) {
+        console.error('Lỗi khi lấy API key:', error);
+        return {
+            studentAnswer: "Lỗi xử lý",
+            detailedSolution: "Lỗi xử lý",
+            gradingDetails: "Lỗi xử lý",
+            score: 0,
+            feedback: "Không thể lấy API key.",
+            suggestions: "Lỗi xử lý"
+        };
+    }
 
     const requestBody = {
-        contents: [
-            {
-                parts: [
-                    { text: promptText },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-                ]
-            }
-        ]
+        model: "gpt-4",
+        messages: [
+            { role: "system", content: "Bạn là một chuyên gia toán học và giáo viên, giúp chấm điểm bài làm của học sinh." },
+            { role: "user", content: promptText }
+        ],
+        max_tokens: 1500,
+        temperature: 0.5
     };
 
     try {
-        const data = await makeApiRequest(apiUrl, requestBody);
-        const response = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const response = await axios.post(apiUrl, requestBody, {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,  // Sử dụng API key lấy từ endpoint
+                'Content-Type': 'application/json'
+            }
+        });
 
-        if (!response) {
-            throw new Error('Không nhận được phản hồi hợp lệ từ API');
-        }
+        const result = response.data.choices[0].message.content;
 
-        // Sử dụng biểu thức chính quy để trích xuất từng phần dữ liệu, đảm bảo lấy đầy đủ nội dung của từng mục
-        const studentAnswer = response.match(/---Bài làm của học sinh---\n([\s\S]*?)\n---Lời giải chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
-        const detailedSolution = response.match(/---Lời giải chi tiết---\n([\s\S]*?)\n---Chấm điểm chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
-        const gradingDetails = response.match(/---Chấm điểm chi tiết---\n([\s\S]*?)\n---Điểm số---/)?.[1]?.trim() || "Không thể xử lý";
-        const score = parseFloat(response.match(/---Điểm số---\n([\d.]+)/)?.[1]) || 0;
-        const feedback = response.match(/---Nhận xét---\n([\s\S]*?)\n---Đề xuất cải thiện---/)?.[1]?.trim() || "Không thể xử lý";
-        const suggestions = response.match(/---Đề xuất cải thiện---\n([\s\S]*)/)?.[1]?.trim() || "Không thể xử lý";
+        // Sử dụng biểu thức chính quy để trích xuất từng phần dữ liệu
+        const studentAnswer = result.match(/---Bài làm của học sinh---\n([\s\S]*?)\n---Lời giải chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
+        const detailedSolution = result.match(/---Lời giải chi tiết---\n([\s\S]*?)\n---Chấm điểm chi tiết---/)?.[1]?.trim() || "Không thể xử lý";
+        const gradingDetails = result.match(/---Chấm điểm chi tiết---\n([\s\S]*?)\n---Điểm số---/)?.[1]?.trim() || "Không thể xử lý";
+        const score = parseFloat(result.match(/---Điểm số---\n([\d.]+)/)?.[1]) || 0;
+        const feedback = result.match(/---Nhận xét---\n([\s\S]*?)\n---Đề xuất cải thiện---/)?.[1]?.trim() || "Không thể xử lý";
+        const suggestions = result.match(/---Đề xuất cải thiện---\n([\s\S]*)/)?.[1]?.trim() || "Không thể xử lý";
 
         return {
             studentAnswer,
@@ -297,8 +317,6 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
         };
     }
 }
-
-
 // Hàm khi nhấn nút "Chấm bài"
 document.getElementById("submitBtn").addEventListener("click", async () => {
     if (!currentProblem) {
