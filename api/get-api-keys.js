@@ -1,24 +1,15 @@
 // api/get-api-keys.js (Sử dụng ESM)
-export default async function handler(req, res) {
-    if (req.method !== "GET") {
-        return res.status(405).json({ error: "Only GET method is allowed" });
-    }
+// /pages/api/get-api-keys.js
 
-    try {
-        const apiKeys = [
-            process.env.API_K1, process.env.API_K2, process.env.API_K3,
-            process.env.API_K4, process.env.API_K5, process.env.API_K6,
-            process.env.API_K7, process.env.API_K8, process.env.API_K9,
-            process.env.API_K10
-        ].filter(key => key); // Lọc ra các API Key hợp lệ
-
-        if (apiKeys.length === 0) {
-            return res.status(500).json({ error: "No API keys available" });
+export default function handler(req, res) {
+    if (req.method === 'GET') {
+        const apiKey = process.env.API_GPT;  // Lấy API key từ biến môi trường
+        if (apiKey) {
+            res.status(200).json({ apiKey });  // Trả về API key dưới dạng JSON
+        } else {
+            res.status(400).json({ error: 'API Key not found' });
         }
-
-        return res.status(200).json({ apiKeys });
-    } catch (error) {
-        console.error("❌ Error retrieving API keys:", error);
-        return res.status(500).json({ error: "Failed to retrieve API keys" });
+    } else {
+        res.status(405).json({ error: 'Method Not Allowed' });  // Chỉ hỗ trợ phương thức GET
     }
 }
