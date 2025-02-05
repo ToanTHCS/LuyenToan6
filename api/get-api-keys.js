@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 
 export default async function handler(req, res) {
     if (req.method === 'POST') {
-        const apiKey = process.env.OPENAI_API_KEY;  // Lấy API key từ biến môi trường
+        const apiKey = process.env.API_GPT;  // Lấy API key từ biến môi trường
         const { model, messages } = req.body;
 
         // Kiểm tra nếu không có messages
