@@ -219,7 +219,6 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     // Format đề bài trước khi gửi lên API
     const formattedProblemText = formatProblemText(problemText);
 
-    // 🛠 **Dùng dấu ` để đảm bảo không bị lỗi xuống dòng**
     const promptText = `
 Học sinh: ${studentId}
 Đề bài:
@@ -263,24 +262,32 @@ Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử l�
             throw new Error("API không trả về dữ liệu hợp lệ.");
         }
 
-        const responseText = data.candidates[0].content.parts[0].text;
-
+        let responseText = data.candidates[0].content.parts[0].text;
+        
+        // Kiểm tra nếu API báo lỗi
         if (!responseText || responseText.includes("Không thể xử lý")) {
             throw new Error("Không thể nhận diện hoặc xử lý hình ảnh.");
         }
 
-        // **Tách nội dung theo số thứ tự (1., 2., 3., ...)**
-        const parts = responseText.split(/\d+\.\s/).slice(1);
+        // **Chuẩn hóa nội dung đầu ra để tránh lỗi tách dữ liệu**
+        responseText = responseText.replace(/\n\s*/g, " ").trim();
+
+        // **Tách nội dung theo số thứ tự chính xác**
+        const parts = responseText.split(/^\d+\.\s/m).slice(1);
 
         if (parts.length < 6) {
             throw new Error("API không trả về đủ 6 phần thông tin.");
         }
 
+        // **Trích xuất số điểm chính xác**
+        const scoreMatch = parts[3]?.match(/\b\d+(\.\d+)?\b/);
+        const score = scoreMatch ? parseFloat(scoreMatch[0]) : 0;
+
         return {
             studentAnswer: parts[0]?.trim() || "Không thể xử lý",
             detailedSolution: parts[1]?.trim() || "Không thể xử lý",
             gradingDetails: parts[2]?.trim() || "Không thể xử lý",
-            score: parseFloat(parts[3]?.match(/\d+(\.\d+)?/)?.[0]) || 0,
+            score,
             feedback: parts[4]?.trim() || "Không thể xử lý",
             suggestions: parts[5]?.trim() || "Không thể xử lý"
         };
@@ -298,13 +305,16 @@ Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử l�
     }
 }
 
-// **Hàm định dạng đề bài trước khi gửi lên API**
-function formatProblemText(problemText) {
-    return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
-}
 
 // Hàm khi nhấn nút "Chấm bài"
+let isGrading = false; // Biến trạng thái để chống spam
+
 document.getElementById("submitBtn").addEventListener("click", async () => {
+    if (isGrading) {
+        alert("⏳ Hệ thống đang chấm bài, vui lòng đợi...");
+        return;
+    }
+
     if (!currentProblem) {
         alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
         return;
@@ -319,13 +329,9 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         return;
     }
 
-    if (!base64Image && studentFileInput.files.length === 0) {
-        alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
-        return;
-    }
+    let base64Image = null;
 
-    // Chuyển đổi ảnh sang Base64 nếu cần
-    if (!base64Image && studentFileInput.files.length > 0) {
+    if (studentFileInput.files.length > 0) {
         try {
             base64Image = await getBase64(studentFileInput.files[0]);
         } catch (error) {
@@ -335,10 +341,16 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         }
     }
 
+    if (!base64Image) {
+        alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
+        return;
+    }
+
     try {
+        isGrading = true; // Bắt đầu quá trình chấm bài
         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
-        
-        // Gọi hàm chấm bài
+
+        // Gọi API chấm bài
         const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = 
             await gradeWithGemini(base64Image, problemText, studentId);
 
@@ -354,10 +366,12 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
             <p><strong>🔧 Đề xuất cải thiện:</strong><br>${suggestions}</p>
         `;
 
-        // Xử lý MathJax cho toàn bộ phần kết quả
-        MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
-            console.error("MathJax lỗi:", err)
-        );
+        // Kiểm tra nếu MathJax đã sẵn sàng trước khi typeset
+        if (window.MathJax) {
+            MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
+                console.error("MathJax lỗi:", err)
+            );
+        }
 
         alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
         progressData[currentProblem.index] = true;
@@ -365,6 +379,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
         document.getElementById("result").innerText = `Lỗi: ${error.message}`;
+    } finally {
+        isGrading = false; // Kết thúc quá trình chấm bài, cho phép nhấn lại
     }
 });
 
