@@ -276,39 +276,25 @@ Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợ
             throw new Error("API trả về phản hồi rỗng.");
         }
 
-        // Kiểm tra nếu API trả về lỗi
-        if (responseText.includes("Không thể xử lý")) {
-            throw new Error("Không thể nhận diện hoặc xử lý hình ảnh.");
+        // 👉 Tìm JSON hợp lệ trong phản hồi
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            console.error("❌ API trả về dữ liệu không phải JSON hợp lệ:", responseText);
+            throw new Error("API không trả về đúng định dạng JSON.");
         }
 
-        // Cố gắng parse JSON từ phản hồi API
         let jsonResponse;
         try {
-            jsonResponse = JSON.parse(responseText);
+            jsonResponse = JSON.parse(jsonMatch[0]); // Chỉ parse phần JSON tìm được
         } catch (jsonError) {
             console.error("❌ Lỗi khi parse JSON từ API:", jsonError);
             console.log("Dữ liệu API nhận được:", responseText);
             throw new Error("API không trả về đúng định dạng JSON.");
         }
 
-        // Kiểm tra nếu JSON hợp lệ và đủ dữ liệu
-        if (!jsonResponse.studentAnswer || !jsonResponse.detailedSolution || !jsonResponse.gradingDetails || 
-            typeof jsonResponse.score !== "number" || !jsonResponse.feedback || !jsonResponse.suggestions) {
-            console.error("❌ API trả về dữ liệu thiếu:", jsonResponse);
-            throw new Error("API không trả về đủ thông tin cần thiết.");
-        }
-
-        return {
-            studentAnswer: jsonResponse.studentAnswer.trim() || "Không có dữ liệu",
-            detailedSolution: jsonResponse.detailedSolution.trim() || "Không có dữ liệu",
-            gradingDetails: jsonResponse.gradingDetails.trim() || "Không có dữ liệu",
-            score: jsonResponse.score || 0,
-            feedback: jsonResponse.feedback.trim() || "Không có dữ liệu",
-            suggestions: jsonResponse.suggestions.trim() || "Không có dữ liệu"
-        };
-
+        return jsonResponse;
     } catch (error) {
-        console.error('Lỗi:', error.message);
+        console.error('❌ Lỗi khi xử lý API Gemini:', error);
         return {
             studentAnswer: "Lỗi xử lý",
             detailedSolution: "Lỗi xử lý",
@@ -318,6 +304,53 @@ Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợ
             suggestions: "Lỗi xử lý"
         };
     }
+}
+
+// Hàm xử lý ảnh trước khi gửi lên AI
+async function preprocessImage(imageFile) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        reader.onload = function () {
+            const img = new Image();
+            img.src = reader.result;
+            img.onload = function () {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+
+                // Resize ảnh nếu quá lớn
+                const maxSize = 800;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxSize || height > maxSize) {
+                    if (width > height) {
+                        height *= maxSize / width;
+                        width = maxSize;
+                    } else {
+                        width *= maxSize / height;
+                        height = maxSize;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Chuyển ảnh sang grayscale
+                const imageData = ctx.getImageData(0, 0, width, height);
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+                    imageData.data[i] = avg; // R
+                    imageData.data[i + 1] = avg; // G
+                    imageData.data[i + 2] = avg; // B
+                }
+                ctx.putImageData(imageData, 0, 0);
+
+                resolve(canvas.toDataURL("image/jpeg"));
+            };
+        };
+        reader.onerror = reject;
+    });
 }
 
 // Hàm khi nhấn nút "Chấm bài"
@@ -345,10 +378,10 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 
     if (studentFileInput.files.length > 0) {
         try {
-            base64Image = await getBase64(studentFileInput.files[0]);
+            base64Image = await preprocessImage(studentFileInput.files[0]); // Dùng ảnh đã xử lý
         } catch (error) {
             alert("❌ Lỗi khi xử lý ảnh. Vui lòng thử lại.");
-            console.error("Lỗi khi chuyển ảnh sang Base64:", error);
+            console.error("Lỗi khi xử lý ảnh:", error);
             return;
         }
     }
@@ -363,37 +396,23 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
 
         // Gọi API chấm bài
-        const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = 
-            await gradeWithGemini(base64Image, problemText, studentId);
-
-        await saveProgress(studentId, score);
+        const response = await gradeWithGemini(base64Image, problemText, studentId);
 
         // Hiển thị kết quả
         document.getElementById("result").innerHTML = `
-            <p><strong>📌 Bài làm của học sinh:</strong><br>${studentAnswer}</p>
-            <p><strong>📝 Lời giải chi tiết:</strong><br>${detailedSolution}</p>
-            <p><strong>📊 Chấm điểm chi tiết:</strong><br>${gradingDetails}</p>
-            <p><strong>🏆 Điểm số:</strong> ${score}/10</p>
-            <p><strong>💡 Nhận xét:</strong><br>${feedback}</p>
-            <p><strong>🔧 Đề xuất cải thiện:</strong><br>${suggestions}</p>
+            <p><strong>📌 Bài làm của học sinh:</strong><br>${response.studentAnswer}</p>
+            <p><strong>📝 Lời giải chi tiết:</strong><br>${response.detailedSolution}</p>
+            <p><strong>📊 Chấm điểm chi tiết:</strong><br>${response.gradingDetails}</p>
+            <p><strong>🏆 Điểm số:</strong> ${response.score}/10</p>
+            <p><strong>💡 Nhận xét:</strong><br>${response.feedback}</p>
+            <p><strong>🔧 Đề xuất cải thiện:</strong><br>${response.suggestions}</p>
         `;
 
-        // Xử lý MathJax nếu có
-        if (window.MathJax) {
-            MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
-                console.error("MathJax lỗi:", err)
-            );
-        }
-
-        alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
-        progressData[currentProblem.index] = true;
-        updateProgressUI();
     } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
-        document.getElementById("result").innerText = `Lỗi: ${error.message}`;
+        document.getElementById("result").innerHTML = `<p><strong>❌ Lỗi:</strong> ${error.message}</p>`;
     } finally {
         isGrading = false;
     }
 });
-
 
