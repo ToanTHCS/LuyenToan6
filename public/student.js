@@ -234,16 +234,21 @@ Hãy thực hiện các bước sau:
 3. So sánh bài làm của học sinh với đáp án đúng, chấm điểm chi tiết.
 4. Chấm điểm trên thang 10, nếu sai hoàn toàn thì cho 0 điểm.
 5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
-6. Đảm bảo phản hồi đúng định dạng sau:
+6. Trả về kết quả **đúng định dạng JSON** sau, không thêm nội dung thừa:
 
-1. Bài làm của học sinh: [Nội dung nhận diện]
-2. Lời giải chi tiết: [Lời giải từng bước]
-3. Chấm điểm chi tiết: [Giải thích cách chấm]
-4. Điểm số: [Số từ 0-10]
-5. Nhận xét: [Nhận xét chi tiết]
-6. Đề xuất cải thiện: [Các đề xuất]
+{
+  "studentAnswer": "[Nội dung nhận diện]",
+  "detailedSolution": "[Lời giải từng bước]",
+  "gradingDetails": "[Giải thích cách chấm]",
+  "score": [Số từ 0-10],
+  "feedback": "[Nhận xét chi tiết]",
+  "suggestions": "[Các đề xuất]"
+}
 
-Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử lý".
+Nếu không thể nhận diện hoặc lỗi, trả về JSON:
+{
+  "error": "Không thể xử lý hình ảnh hoặc nhận diện bài làm."
+}
     `;
 
     const requestBody = {
@@ -260,40 +265,47 @@ Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử l�
     try {
         const data = await makeApiRequest(apiUrl, requestBody);
 
-        console.log("Full API response:", JSON.stringify(data, null, 2));
+        console.log("🔍 Full API Response:", JSON.stringify(data, null, 2));
 
         if (!data?.candidates?.length || !data.candidates[0]?.content?.parts?.length) {
             throw new Error("API không trả về dữ liệu hợp lệ.");
         }
 
         let responseText = data.candidates[0].content.parts[0].text;
-        
-        // Kiểm tra nếu API báo lỗi
-        if (!responseText || responseText.includes("Không thể xử lý")) {
+
+        if (!responseText) {
+            throw new Error("API trả về phản hồi rỗng.");
+        }
+
+        // Kiểm tra nếu API trả về lỗi
+        if (responseText.includes("Không thể xử lý")) {
             throw new Error("Không thể nhận diện hoặc xử lý hình ảnh.");
         }
 
-        // **Chuẩn hóa nội dung đầu ra để tránh lỗi tách dữ liệu**
-        responseText = responseText.replace(/\n\s*/g, " ").trim();
-
-        // **Tách nội dung theo số thứ tự chính xác**
-        const parts = responseText.split(/^\d+\.\s/m).slice(1);
-
-        if (parts.length < 6) {
-            throw new Error("API không trả về đủ 6 phần thông tin.");
+        // Cố gắng parse JSON từ phản hồi API
+        let jsonResponse;
+        try {
+            jsonResponse = JSON.parse(responseText);
+        } catch (jsonError) {
+            console.error("❌ Lỗi khi parse JSON từ API:", jsonError);
+            console.log("Dữ liệu API nhận được:", responseText);
+            throw new Error("API không trả về đúng định dạng JSON.");
         }
 
-        // **Trích xuất số điểm chính xác**
-        const scoreMatch = parts[3]?.match(/\b\d+(\.\d+)?\b/);
-        const score = scoreMatch ? parseFloat(scoreMatch[0]) : 0;
+        // Kiểm tra nếu JSON hợp lệ và đủ dữ liệu
+        if (!jsonResponse.studentAnswer || !jsonResponse.detailedSolution || !jsonResponse.gradingDetails || 
+            typeof jsonResponse.score !== "number" || !jsonResponse.feedback || !jsonResponse.suggestions) {
+            console.error("❌ API trả về dữ liệu thiếu:", jsonResponse);
+            throw new Error("API không trả về đủ thông tin cần thiết.");
+        }
 
         return {
-            studentAnswer: parts[0]?.trim() || "Không thể xử lý",
-            detailedSolution: parts[1]?.trim() || "Không thể xử lý",
-            gradingDetails: parts[2]?.trim() || "Không thể xử lý",
-            score,
-            feedback: parts[4]?.trim() || "Không thể xử lý",
-            suggestions: parts[5]?.trim() || "Không thể xử lý"
+            studentAnswer: jsonResponse.studentAnswer.trim() || "Không có dữ liệu",
+            detailedSolution: jsonResponse.detailedSolution.trim() || "Không có dữ liệu",
+            gradingDetails: jsonResponse.gradingDetails.trim() || "Không có dữ liệu",
+            score: jsonResponse.score || 0,
+            feedback: jsonResponse.feedback.trim() || "Không có dữ liệu",
+            suggestions: jsonResponse.suggestions.trim() || "Không có dữ liệu"
         };
 
     } catch (error) {
@@ -308,8 +320,9 @@ Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử l�
         };
     }
 }
-// Hàm khi nhấn nút "Chấm bài"
 
+// Hàm khi nhấn nút "Chấm bài"
+let isGrading = false; // Trạng thái chống spam
 
 document.getElementById("submitBtn").addEventListener("click", async () => {
     if (isGrading) {
@@ -349,7 +362,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     }
 
     try {
-        isGrading = true; // Bắt đầu quá trình chấm bài
+        isGrading = true;
         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
 
         // Gọi API chấm bài
@@ -358,7 +371,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 
         await saveProgress(studentId, score);
 
-        // Hiển thị đầy đủ thông tin
+        // Hiển thị kết quả
         document.getElementById("result").innerHTML = `
             <p><strong>📌 Bài làm của học sinh:</strong><br>${studentAnswer}</p>
             <p><strong>📝 Lời giải chi tiết:</strong><br>${detailedSolution}</p>
@@ -368,7 +381,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
             <p><strong>🔧 Đề xuất cải thiện:</strong><br>${suggestions}</p>
         `;
 
-        // Kiểm tra nếu MathJax đã sẵn sàng trước khi typeset
+        // Xử lý MathJax nếu có
         if (window.MathJax) {
             MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
                 console.error("MathJax lỗi:", err)
@@ -382,9 +395,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         console.error("❌ Lỗi khi chấm bài:", error);
         document.getElementById("result").innerText = `Lỗi: ${error.message}`;
     } finally {
-        isGrading = false; // Kết thúc quá trình chấm bài, cho phép nhấn lại
+        isGrading = false;
     }
 });
-
 
 
