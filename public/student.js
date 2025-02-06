@@ -23,6 +23,10 @@ async function loadApiKeys() {
 
 // 🛠 Chọn API Key tiếp theo để luân phiên
 function getNextApiKey() {
+    if (apiKeys.length === 0) {
+        console.error("❌ Không có API keys nào khả dụng!");
+        return null;
+    }
     const apiKey = apiKeys[currentKeyIndex];
     currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;  // Chuyển sang API Key tiếp theo
     return apiKey;
@@ -33,6 +37,7 @@ async function makeApiRequest(url, body, maxRetries = 5, delay = 5000) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const apiKey = getNextApiKey(); // Lấy API Key tiếp theo
+            if (!apiKey) throw new Error("Không tìm thấy API Key để sử dụng.");
             console.log(`🔑 Dùng API Key: ${apiKey} (Lần thử: ${attempt})`);
 
             const response = await fetch(`${url}?key=${apiKey}`, {
@@ -63,100 +68,56 @@ async function makeApiRequest(url, body, maxRetries = 5, delay = 5000) {
     }
 }
 
-// 🛠 Hàm xử lý chấm bài bằng Gemini API
-async function gradeWithGemini(base64Image, problemText, studentId) {
-    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
-    const formattedProblemText = formatProblemText(problemText);
-
-    const promptText = `
-Học sinh: ${studentId}
-Đề bài:
-${formattedProblemText}
-
-Hãy thực hiện các bước sau:
-1. Nhận diện bài làm của học sinh từ hình ảnh và gõ lại dưới dạng văn bản.
-2. Giải bài toán và cung cấp lời giải chi tiết.
-3. So sánh bài làm của học sinh với đáp án đúng, chấm điểm chi tiết.
-4. Trả về JSON với thông tin kết quả.
-    `;
-
-    const requestBody = {
-        contents: [
-            {
-                parts: [
-                    { text: promptText },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-                ]
-            }
-        ]
-    };
-
+// 🛠 Tải danh sách bài tập từ API
+async function loadProblems() {
     try {
-        const data = await makeApiRequest(apiUrl, requestBody);
-        console.log("🔍 Full API Response:", JSON.stringify(data, null, 2));
-
-        if (!data?.candidates?.length || !data.candidates[0]?.content?.parts?.length) {
-            throw new Error("API không trả về dữ liệu hợp lệ.");
+        const response = await fetch('/api/get-problems');
+        if (!response.ok) {
+            throw new Error("Không thể tải danh sách bài tập!");
         }
-
-        return JSON.parse(data.candidates[0].content.parts[0].text);
+        const problems = await response.json();
+        console.log("✅ Danh sách bài tập:", problems);
+        displayProblemList(problems); // Hiển thị danh sách bài tập
     } catch (error) {
-        console.error('Lỗi:', error.message);
-        return { error: "Không thể xử lý bài làm." };
+        console.error("❌ Lỗi khi tải danh sách bài tập:", error);
     }
 }
 
-// 🛠 Khi nhấn nút "Chấm bài"
-document.getElementById("submitBtn").addEventListener("click", async () => {
-    if (isGrading) {
-        alert("⏳ Hệ thống đang chấm bài, vui lòng đợi...");
-        return;
-    }
-    if (!currentProblem) {
-        alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
+// 🛠 Hiển thị danh sách bài tập
+function displayProblemList(problems) {
+    const problemContainer = document.getElementById("problemList");
+    if (!problemContainer) {
+        console.error("❌ Không tìm thấy phần tử #problemList để hiển thị bài tập!");
         return;
     }
 
-    const studentId = localStorage.getItem("studentId");
-    const problemText = document.getElementById("problemText").innerText.trim();
-    const studentFileInput = document.getElementById("studentImage");
+    problemContainer.innerHTML = ""; // Xóa danh sách cũ nếu có
 
-    let base64Image = null;
-    if (studentFileInput.files.length > 0) {
-        base64Image = await getBase64(studentFileInput.files[0]);
-    }
-    if (!base64Image) {
-        alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
-        return;
-    }
+    problems.forEach(problem => {
+        const problemBox = document.createElement("div");
+        problemBox.textContent = problem.index;
+        problemBox.className = "problem-box";
+        problemBox.dataset.id = problem.index;
 
-    try {
-        isGrading = true;
-        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
+        problemBox.addEventListener("click", () => {
+            displayProblem(problem); // Hiển thị nội dung bài tập khi người dùng nhấn vào
+        });
 
-        const result = await gradeWithGemini(base64Image, problemText, studentId);
-        if (result.error) {
-            throw new Error(result.error);
-        }
+        problemContainer.appendChild(problemBox);
+    });
 
-        document.getElementById("result").innerHTML = `
-            <p><strong>📌 Bài làm của học sinh:</strong><br>${result.studentAnswer}</p>
-            <p><strong>📝 Lời giải chi tiết:</strong><br>${result.detailedSolution}</p>
-            <p><strong>📊 Chấm điểm chi tiết:</strong><br>${result.gradingDetails}</p>
-            <p><strong>🏆 Điểm số:</strong> ${result.score}/10</p>
-            <p><strong>💡 Nhận xét:</strong><br>${result.feedback}</p>
-            <p><strong>🔧 Đề xuất cải thiện:</strong><br>${result.suggestions}</p>
-        `;
-        alert(`✅ Bài tập đã được chấm! Bạn đạt ${result.score}/10 điểm.`);
-    } catch (error) {
-        console.error("❌ Lỗi khi chấm bài:", error);
-        document.getElementById("result").innerText = `Lỗi: ${error.message}`;
-    } finally {
-        isGrading = false;
-    }
-});
+    console.log("✅ Danh sách bài tập đã cập nhật.");
+}
 
+// 🛠 Hiển thị bài tập khi chọn
+function displayProblem(problem) {
+    document.getElementById("problemText").innerText = problem.problem;
+    currentProblem = problem;
+}
+
+// Gọi hàm loadProblems() khi trang tải xong
 document.addEventListener("DOMContentLoaded", async function () {
     await loadApiKeys();
-    console.log("✅ Đã tải API Keys và sẵn sàng chấm bài!");
+    await loadProblems();
+    console.log("✅ Đã tải API Keys và danh sách bài tập!");
 });
