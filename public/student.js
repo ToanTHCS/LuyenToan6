@@ -305,7 +305,14 @@ Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử l�
     }
 }
 // Hàm khi nhấn nút "Chấm bài"
+let isGrading = false; // Biến trạng thái để chống spam
+
 document.getElementById("submitBtn").addEventListener("click", async () => {
+    if (isGrading) {
+        alert("⏳ Hệ thống đang chấm bài, vui lòng đợi...");
+        return;
+    }
+
     if (!currentProblem) {
         alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
         return;
@@ -320,23 +327,49 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         return;
     }
 
-    if (!base64Image && studentFileInput.files.length === 0) {
+    let base64Image = null;
+
+    if (studentFileInput.files.length > 0) {
+        try {
+            base64Image = await getBase64(studentFileInput.files[0]);
+        } catch (error) {
+            alert("❌ Lỗi khi xử lý ảnh. Vui lòng thử lại.");
+            console.error("Lỗi khi chuyển ảnh sang Base64:", error);
+            return;
+        }
+    }
+
+    if (!base64Image) {
         alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
         return;
     }
 
-    if (!base64Image && studentFileInput.files.length > 0) {
-        base64Image = await getBase64(studentFileInput.files[0]);
-    }
-
     try {
-         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
-        // Gọi lại hàm gradeWithGemini đã có
-        const { studentAnswer, feedback, score } = await gradeWithGemini(base64Image, problemText, studentId);
+        isGrading = true; // Bắt đầu quá trình chấm bài
+        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
+
+        // Gọi API chấm bài
+        const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = 
+            await gradeWithGemini(base64Image, problemText, studentId);
+
         await saveProgress(studentId, score);
 
-        document.getElementById("result").innerHTML = feedback;
-        MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
+        // Hiển thị đầy đủ thông tin
+        document.getElementById("result").innerHTML = `
+            <p><strong>📌 Bài làm của học sinh:</strong><br>${studentAnswer}</p>
+            <p><strong>📝 Lời giải chi tiết:</strong><br>${detailedSolution}</p>
+            <p><strong>📊 Chấm điểm chi tiết:</strong><br>${gradingDetails}</p>
+            <p><strong>🏆 Điểm số:</strong> ${score}/10</p>
+            <p><strong>💡 Nhận xét:</strong><br>${feedback}</p>
+            <p><strong>🔧 Đề xuất cải thiện:</strong><br>${suggestions}</p>
+        `;
+
+        // Kiểm tra nếu MathJax đã sẵn sàng trước khi typeset
+        if (window.MathJax) {
+            MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
+                console.error("MathJax lỗi:", err)
+            );
+        }
 
         alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
         progressData[currentProblem.index] = true;
@@ -344,6 +377,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
     } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
         document.getElementById("result").innerText = `Lỗi: ${error.message}`;
+    } finally {
+        isGrading = false; // Kết thúc quá trình chấm bài, cho phép nhấn lại
     }
 });
 
