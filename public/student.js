@@ -253,14 +253,16 @@ Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợ
     console.log("📡 Đang gửi yêu cầu API với prompt:");
     console.log(promptText);
 
-    console.log("📏 Kích thước ảnh (base64):", base64Image.length);
+    // Loại bỏ tiền tố "data:image/jpeg;base64," để đảm bảo đúng định dạng Google yêu cầu
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+    console.log("📷 Base64 gửi đi (đã loại bỏ tiền tố):", base64Data.substring(0, 100) + "...");
 
     const requestBody = {
         contents: [
             {
                 parts: [
                     { text: promptText },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+                    { inline_data: { mime_type: "image/jpeg", data: base64Data } } // Dữ liệu ảnh chuẩn
                 ]
             }
         ]
