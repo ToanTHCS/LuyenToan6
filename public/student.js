@@ -4,6 +4,7 @@ let apiKeys = [];  // Biến lưu API keys
 let base64Image = ""; // Biến toàn cục để lưu ảnh bài làm
 let progressData = {}; // Biến lưu tiến trình học sinh
 let currentProblem = null; // Biến lưu bài tập hiện tại
+let isGrading = false; // Biến trạng thái để chống spam
 
 // Tải API keys từ server
 async function loadApiKeys() {
@@ -305,7 +306,7 @@ Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử l�
     }
 }
 // Hàm khi nhấn nút "Chấm bài"
-let isGrading = false; // Biến trạng thái để chống spam
+
 
 document.getElementById("submitBtn").addEventListener("click", async () => {
     if (isGrading) {
