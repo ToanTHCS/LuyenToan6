@@ -5,7 +5,108 @@ let base64Image = ""; // Biến toàn cục để lưu ảnh bài làm
 let progressData = {}; // Biến lưu tiến trình học sinh
 let currentProblem = null; // Biến lưu bài tập hiện tại
 let isGrading = false; // Biến trạng thái để chống spam
+// student.js - Quản lý tiến trình học sinh và chấm bài
+let currentStudentId = null;  // ID học sinh đăng nhập
+const GITHUB_PROGRESS_URL = "https://raw.githubusercontent.com/ToanTHCS/LuyenToan6/main/data/progress.json";
+const GITHUB_RESULTS_URL = "https://raw.githubusercontent.com/ToanTHCS/LuyenToan6/main/data/results.json";
+const GITHUB_SAVE_PROGRESS_URL = "https://api.github.com/repos/ToanTHCS/LuyenToan6/contents/data/progress.json";
 
+// Hàm lấy GitHub token từ biến môi trường
+async function getGitHubToken() {
+    try {
+        const response = await fetch("/api/get-github-token");
+        if (!response.ok) throw new Error("Không thể lấy GitHub token");
+        const data = await response.json();
+        return data.githubToken;
+    } catch (error) {
+        console.error("❌ Lỗi khi lấy GitHub token:", error);
+        return null;
+    }
+}
+
+// Tải tiến trình từ GitHub
+async function loadProgress() {
+    try {
+        console.log("📥 Đang tải tiến trình từ GitHub...");
+        const response = await fetch(GITHUB_PROGRESS_URL);
+        if (!response.ok) throw new Error("Không thể tải tiến trình từ GitHub.");
+        progressData = await response.json();
+        console.log("✅ Tiến trình đã tải thành công:", progressData);
+        displayProblemList();
+    } catch (error) {
+        console.error("❌ Lỗi khi tải tiến trình:", error);
+        progressData = {};
+    }
+}
+
+// Hiển thị danh sách bài tập với trạng thái màu sắc
+function displayProblemList() {
+    const problemContainer = document.getElementById("problemList");
+    problemContainer.innerHTML = "";
+
+    problems.forEach(problem => {
+        const problemBox = document.createElement("div");
+        problemBox.textContent = problem.index;
+        problemBox.className = "problem-box";
+        problemBox.dataset.id = problem.index;
+
+        function updateProblemColor() {
+            if (progressData[currentStudentId]?.history.includes(problem.index)) {
+                problemBox.style.backgroundColor = "green";
+            } else {
+                problemBox.style.backgroundColor = "yellow";
+            }
+        }
+
+        updateProblemColor();
+
+        problemBox.addEventListener("click", async () => {
+            if (!progressData[currentStudentId]?.history.includes(problem.index)) {
+                problemBox.style.backgroundColor = "blue";
+            }
+            displayProblem(problem);
+        });
+
+        problemContainer.appendChild(problemBox);
+    });
+}
+
+// Lưu tiến trình lên GitHub JSON
+async function saveProgress() {
+    try {
+        console.log("📤 Đang gửi tiến trình lên GitHub...");
+        const githubToken = await getGitHubToken();
+        if (!githubToken) throw new Error("Không có GitHub token.");
+
+        if (!progressData[currentStudentId]) {
+            progressData[currentStudentId] = { completedExercises: 0, averageScore: 0, history: [] };
+        }
+        if (!progressData[currentStudentId].history.includes(currentProblem.index)) {
+            progressData[currentStudentId].history.push(currentProblem.index);
+        }
+        progressData[currentStudentId].completedExercises = progressData[currentStudentId].history.length;
+
+        const updatedData = {
+            message: "Cập nhật tiến trình học sinh",
+            content: btoa(JSON.stringify(progressData, null, 2)),
+        };
+
+        const response = await fetch(GITHUB_SAVE_PROGRESS_URL, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `token ${githubToken}`
+            },
+            body: JSON.stringify(updatedData),
+        });
+
+        if (!response.ok) throw new Error("Lỗi khi lưu tiến trình vào GitHub.");
+        console.log("✅ Tiến trình đã được lưu!");
+        await loadProgress();
+    } catch (error) {
+        console.error("❌ Lỗi khi lưu tiến trình:", error);
+    }
+}
 function formatProblemText(problemText) {
     return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
 }
@@ -378,7 +479,7 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
             <p><strong>💡 Nhận xét:</strong><br>${feedback}</p>
             <p><strong>🔧 Đề xuất cải thiện:</strong><br>${suggestions}</p>
         `;
-
+        
         // Xử lý MathJax nếu có
         if (window.MathJax) {
             MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
