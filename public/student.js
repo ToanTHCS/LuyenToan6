@@ -212,6 +212,9 @@ async function makeApiRequest(apiUrl, requestBody) {
     }
     throw new Error('All API keys exhausted.');
 }
+function formatProblemText(problemText) {
+    return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
+}
 // Hàm gọi API Gemini để chấm bài
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
