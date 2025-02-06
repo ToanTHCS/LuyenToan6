@@ -40,7 +40,9 @@ async function loadProgress() {
 }
 
 // Hiển thị danh sách bài tập với trạng thái màu sắc
-function displayProblemList() {
+
+// Hiển thị danh sách bài tập với trạng thái màu sắc
+function updateProblemList() {
     const problemContainer = document.getElementById("problemList");
     problemContainer.innerHTML = "";
 
