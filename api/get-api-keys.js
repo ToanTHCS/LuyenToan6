@@ -6,9 +6,7 @@ export default async function handler(req, res) {
     try {
         const apiKeys = [
             process.env.API_K1, process.env.API_K2, process.env.API_K3,
-            process.env.API_K4, process.env.API_K5, process.env.API_K6,
-            process.env.API_K7, process.env.API_K8, process.env.API_K9,
-            process.env.API_K10
+            process.env.API_K4, process.env.API_K10
         ].filter(key => key); // Lọc ra các API Key hợp lệ
 
         if (apiKeys.length === 0) {
