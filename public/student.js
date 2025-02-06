@@ -216,39 +216,31 @@ async function makeApiRequest(apiUrl, requestBody) {
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
 
+    // Format đề bài trước khi gửi lên API
     const formattedProblemText = formatProblemText(problemText);
 
+    // 🛠 **Dùng dấu ` để đảm bảo không bị lỗi xuống dòng**
     const promptText = `
-    Học sinh: ${studentId}
-    Đề bài:
-    ${formattedProblemText}
+Học sinh: ${studentId}
+Đề bài:
+${formattedProblemText}
 
-  async function gradeWithGemini(base64Image, problemText, studentId) {
-    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
+Hãy thực hiện các bước sau:
+1. Nhận diện bài làm của học sinh từ hình ảnh và gõ lại dưới dạng văn bản, công thức Toán viết bằng Latex ($...$).
+2. Giải bài toán và cung cấp lời giải chi tiết theo chương trình lớp 7.
+3. So sánh bài làm của học sinh với đáp án đúng, chấm điểm chi tiết.
+4. Chấm điểm trên thang 10, nếu sai hoàn toàn thì cho 0 điểm.
+5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
+6. Đảm bảo phản hồi đúng định dạng sau:
 
-    const formattedProblemText = formatProblemText(problemText);
+1. Bài làm của học sinh: [Nội dung nhận diện]
+2. Lời giải chi tiết: [Lời giải từng bước]
+3. Chấm điểm chi tiết: [Giải thích cách chấm]
+4. Điểm số: [Số từ 0-10]
+5. Nhận xét: [Nhận xét chi tiết]
+6. Đề xuất cải thiện: [Các đề xuất]
 
-    const promptText = `
-    Học sinh: ${studentId}
-    Đề bài:
-    ${formattedProblemText}
-
-    Hãy thực hiện các bước sau:
-    1. Nhận diện bài làm của học sinh từ hình ảnh và gõ lại dưới dạng văn bản, công thức Toán viết bằng Latex ($...$).
-    2. Giải bài toán và cung cấp lời giải chi tiết theo chương trình lớp 7.
-    3. So sánh bài làm của học sinh với đáp án đúng, chấm điểm chi tiết.
-    4. Chấm điểm trên thang 10, nếu sai hoàn toàn thì cho 0 điểm.
-    5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
-    6. Đảm bảo phản hồi đúng định dạng sau:
-
-    1. Bài làm của học sinh: [Nội dung nhận diện]
-    2. Lời giải chi tiết: [Lời giải từng bước]
-    3. Chấm điểm chi tiết: [Giải thích cách chấm]
-    4. Điểm số: [Số từ 0-10]
-    5. Nhận xét: [Nhận xét chi tiết]
-    6. Đề xuất cải thiện: [Các đề xuất]
-
-    Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử lý".
+Nếu không thể nhận diện hoặc lỗi, trả về: "Không thể xử lý".
     `;
 
     const requestBody = {
@@ -277,7 +269,7 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
             throw new Error("Không thể nhận diện hoặc xử lý hình ảnh.");
         }
 
-        // **Tách nội dung dựa trên số thứ tự (1., 2., 3., ...)**
+        // **Tách nội dung theo số thứ tự (1., 2., 3., ...)**
         const parts = responseText.split(/\d+\.\s/).slice(1);
 
         if (parts.length < 6) {
