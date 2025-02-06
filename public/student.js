@@ -250,6 +250,12 @@ Hãy thực hiện các bước sau:
 Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợp lệ với studentAnswer là "Không rõ".
 `;
 
+    // Ghi log để kiểm tra dữ liệu gửi đi
+    console.log("📡 Đang gửi yêu cầu API với prompt:");
+    console.log(promptText);
+
+    console.log("📏 Kích thước ảnh (base64):", base64Image.length);
+
     const requestBody = {
         contents: [
             {
@@ -261,10 +267,12 @@ Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợ
         ]
     };
 
+    console.log("📡 Dữ liệu gửi lên API:", JSON.stringify(requestBody, null, 2));
+
     try {
         const data = await makeApiRequest(apiUrl, requestBody);
 
-        console.log("🔍 Full API Response:", JSON.stringify(data, null, 2));
+        console.log("📡 Phản hồi API ngay sau khi gửi:", JSON.stringify(data, null, 2));
 
         if (!data?.candidates?.length || !data.candidates[0]?.content?.parts?.length) {
             throw new Error("API không trả về dữ liệu hợp lệ.");
@@ -304,53 +312,6 @@ Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợ
             suggestions: "Lỗi xử lý"
         };
     }
-}
-
-// Hàm xử lý ảnh trước khi gửi lên AI
-async function preprocessImage(imageFile) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(imageFile);
-        reader.onload = function () {
-            const img = new Image();
-            img.src = reader.result;
-            img.onload = function () {
-                const canvas = document.createElement("canvas");
-                const ctx = canvas.getContext("2d");
-
-                // Resize ảnh nếu quá lớn
-                const maxSize = 800;
-                let width = img.width;
-                let height = img.height;
-                if (width > maxSize || height > maxSize) {
-                    if (width > height) {
-                        height *= maxSize / width;
-                        width = maxSize;
-                    } else {
-                        width *= maxSize / height;
-                        height = maxSize;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Chuyển ảnh sang grayscale
-                const imageData = ctx.getImageData(0, 0, width, height);
-                for (let i = 0; i < imageData.data.length; i += 4) {
-                    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
-                    imageData.data[i] = avg; // R
-                    imageData.data[i + 1] = avg; // G
-                    imageData.data[i + 2] = avg; // B
-                }
-                ctx.putImageData(imageData, 0, 0);
-
-                resolve(canvas.toDataURL("image/jpeg"));
-            };
-        };
-        reader.onerror = reject;
-    });
 }
 
 // Hàm khi nhấn nút "Chấm bài"
