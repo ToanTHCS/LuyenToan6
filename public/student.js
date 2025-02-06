@@ -250,7 +250,6 @@ Hãy thực hiện các bước sau:
 Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợp lệ với studentAnswer là "Không rõ".
 `;
 
-    // Ghi log để kiểm tra dữ liệu gửi đi
     console.log("📡 Đang gửi yêu cầu API với prompt:");
     console.log(promptText);
 
@@ -314,6 +313,73 @@ Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợ
     }
 }
 
+// Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
+async function preprocessImage(imageFile) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = function () {
+            console.log("📷 Đã đọc ảnh thành công!");
+
+            const img = new Image();
+            img.src = reader.result;
+
+            img.onload = function () {
+                console.log(`📏 Kích thước ảnh gốc: ${img.width}x${img.height}`);
+
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+
+                // Resize ảnh nếu quá lớn
+                const maxSize = 800;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxSize || height > maxSize) {
+                    if (width > height) {
+                        height *= maxSize / width;
+                        width = maxSize;
+                    } else {
+                        width *= maxSize / height;
+                        height = maxSize;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                console.log(`📏 Ảnh sau khi resize: ${canvas.width}x${canvas.height}`);
+
+                // Chuyển ảnh sang grayscale
+                const imageData = ctx.getImageData(0, 0, width, height);
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    const avg = (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+                    imageData.data[i] = avg; // R
+                    imageData.data[i + 1] = avg; // G
+                    imageData.data[i + 2] = avg; // B
+                }
+                ctx.putImageData(imageData, 0, 0);
+
+                console.log("✅ Ảnh đã xử lý thành công!");
+
+                resolve(canvas.toDataURL("image/jpeg"));
+            };
+
+            img.onerror = function (err) {
+                console.error("❌ Lỗi khi tải ảnh:", err);
+                reject("Lỗi khi tải ảnh.");
+            };
+        };
+
+        reader.onerror = function (err) {
+            console.error("❌ Lỗi khi đọc ảnh:", err);
+            reject("Lỗi khi đọc ảnh.");
+        };
+
+        reader.readAsDataURL(imageFile);
+    });
+}
+
 // Hàm khi nhấn nút "Chấm bài"
 document.getElementById("submitBtn").addEventListener("click", async () => {
     if (isGrading) {
@@ -360,18 +426,11 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         const response = await gradeWithGemini(base64Image, problemText, studentId);
 
         // Hiển thị kết quả
-        document.getElementById("result").innerHTML = `
-            <p><strong>📌 Bài làm của học sinh:</strong><br>${response.studentAnswer}</p>
-            <p><strong>📝 Lời giải chi tiết:</strong><br>${response.detailedSolution}</p>
-            <p><strong>📊 Chấm điểm chi tiết:</strong><br>${response.gradingDetails}</p>
-            <p><strong>🏆 Điểm số:</strong> ${response.score}/10</p>
-            <p><strong>💡 Nhận xét:</strong><br>${response.feedback}</p>
-            <p><strong>🔧 Đề xuất cải thiện:</strong><br>${response.suggestions}</p>
-        `;
+        document.getElementById("result").innerHTML = `<pre>${JSON.stringify(response, null, 2)}</pre>`;
 
     } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
-        document.getElementById("result").innerHTML = `<p><strong>❌ Lỗi:</strong> ${error.message}</p>`;
+        document.getElementById("result").innerText = `❌ Lỗi: ${error.message}`;
     } finally {
         isGrading = false;
     }
