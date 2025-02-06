@@ -226,27 +226,29 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     const promptText = `
 Học sinh: ${studentId}
 Đề bài:
-            ${problemText}
-             Hãy thực hiện các bước sau:
-            1. Nhận diện và gõ lại bài làm của học sinh từ hình ảnh thành văn bản một cách chính xác, tất cả công thức Toán viết dưới dạng Latex, bọc trong dấu $, không tự suy luận nội dung hình ảnh, chỉ gõ lại chính xác các nội dung nhận diện được từ hình ảnh
-            2. Giải bài toán và cung cấp lời giải chi tiết cho từng phần, lời giải phù hợp học sinh lớp 7 học theo chương trình 2018.
-            3. So sánh bài làm của học sinh với đáp án đúng, chấm chi tiết từng bước làm đến kết quả
-            4. Chấm điểm bài làm của học sinh trên thang điểm 10, cho 0 điểm với bài giải không đúng yêu cầu đề bài. Giải thích chi tiết cách tính điểm cho từng phần.
-            5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
-            6. Kiểm tra lại kết quả chấm điểm và đảm bảo tính nhất quán giữa bài làm, lời giải, và điểm số.
-            Kết quả trả về cần có định dạng sau:
-            Bài làm của học sinh: [Bài làm được nhận diện từ hình ảnh]
-            Lời giải chi tiết: [Lời giải từng bước]
-            Chấm điểm: [Giải thích cách chấm điểm cho từng phần]
-            Điểm số: [Điểm trên thang điểm 10]
-            Nhận xét: [Nhận xét chi tiết]
-            Đề xuất cải thiện: [Các đề xuất cụ thể]
-            Chú ý:
-	    - Bài làm của học sinh không khớp với đề bài thì cho 0 điểm,
-            - Điểm số phải là một số từ 0 đến 10, có thể có một chữ số thập phân.
-            - Hãy đảm bảo tính chính xác và khách quan trong việc chấm điểm và nhận xét.
-            - Nếu có sự không nhất quán giữa bài làm và điểm số, hãy giải thích rõ lý do.
-            `;
+${formattedProblemText}
+
+Hãy thực hiện các bước sau:
+1. Cố gắng nhận diện bài làm của học sinh từ hình ảnh, ngay cả khi hình ảnh không rõ ràng. 
+2. Nếu không chắc chắn, hãy đoán nội dung gần nhất có thể.
+3. Nếu bài làm sai, vẫn trả về kết quả với nhận xét phù hợp thay vì nói "Không thể nhận diện".
+4. Giải bài toán và đưa ra lời giải chi tiết theo chương trình lớp 7.
+5. So sánh bài làm của học sinh với đáp án đúng và chấm điểm.
+6. Chấm điểm trên thang 10, nếu sai hoàn toàn thì cho 0 điểm.
+7. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
+8. Trả về đúng định dạng JSON sau:
+
+{
+  "studentAnswer": "[Nội dung nhận diện]",
+  "detailedSolution": "[Lời giải từng bước]",
+  "gradingDetails": "[Giải thích cách chấm]",
+  "score": [Số từ 0-10],
+  "feedback": "[Nhận xét chi tiết]",
+  "suggestions": "[Các đề xuất]"
+}
+
+Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợp lệ với studentAnswer là "Không rõ".
+`;
 
     const requestBody = {
         contents: [
