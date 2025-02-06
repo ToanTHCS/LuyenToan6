@@ -6,6 +6,9 @@ let progressData = {}; // Biến lưu tiến trình học sinh
 let currentProblem = null; // Biến lưu bài tập hiện tại
 let isGrading = false; // Biến trạng thái để chống spam
 
+function formatProblemText(problemText) {
+    return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
+}
 // Tải API keys từ server
 async function loadApiKeys() {
     try {
