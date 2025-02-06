@@ -223,6 +223,16 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     Đề bài:
     ${formattedProblemText}
 
+  async function gradeWithGemini(base64Image, problemText, studentId) {
+    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
+
+    const formattedProblemText = formatProblemText(problemText);
+
+    const promptText = `
+    Học sinh: ${studentId}
+    Đề bài:
+    ${formattedProblemText}
+
     Hãy thực hiện các bước sau:
     1. Nhận diện bài làm của học sinh từ hình ảnh và gõ lại dưới dạng văn bản, công thức Toán viết bằng Latex ($...$).
     2. Giải bài toán và cung cấp lời giải chi tiết theo chương trình lớp 7.
@@ -270,13 +280,17 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
         // **Tách nội dung dựa trên số thứ tự (1., 2., 3., ...)**
         const parts = responseText.split(/\d+\.\s/).slice(1);
 
+        if (parts.length < 6) {
+            throw new Error("API không trả về đủ 6 phần thông tin.");
+        }
+
         return {
-            studentAnswer: parts[0] || "Không thể xử lý",
-            detailedSolution: parts[1] || "Không thể xử lý",
-            gradingDetails: parts[2] || "Không thể xử lý",
-            score: parts[3] || "Không thể xử lý",
-            feedback: parts[4] || "Không thể xử lý",
-            suggestions: parts[5] || "Không thể xử lý"
+            studentAnswer: parts[0]?.trim() || "Không thể xử lý",
+            detailedSolution: parts[1]?.trim() || "Không thể xử lý",
+            gradingDetails: parts[2]?.trim() || "Không thể xử lý",
+            score: parseFloat(parts[3]?.match(/\d+(\.\d+)?/)?.[0]) || 0,
+            feedback: parts[4]?.trim() || "Không thể xử lý",
+            suggestions: parts[5]?.trim() || "Không thể xử lý"
         };
 
     } catch (error) {
@@ -285,14 +299,14 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
             studentAnswer: "Lỗi xử lý",
             detailedSolution: "Lỗi xử lý",
             gradingDetails: "Lỗi xử lý",
-            score: "0",
+            score: 0,
             feedback: `Lỗi: ${error.message}`,
             suggestions: "Lỗi xử lý"
         };
     }
 }
 
-// **Hàm định dạng đề bài**
+// **Hàm định dạng đề bài trước khi gửi lên API**
 function formatProblemText(problemText) {
     return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
 }
@@ -318,18 +332,40 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         return;
     }
 
+    // Chuyển đổi ảnh sang Base64 nếu cần
     if (!base64Image && studentFileInput.files.length > 0) {
-        base64Image = await getBase64(studentFileInput.files[0]);
+        try {
+            base64Image = await getBase64(studentFileInput.files[0]);
+        } catch (error) {
+            alert("❌ Lỗi khi xử lý ảnh. Vui lòng thử lại.");
+            console.error("Lỗi khi chuyển ảnh sang Base64:", error);
+            return;
+        }
     }
 
     try {
-         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
-        // Gọi lại hàm gradeWithGemini đã có
-        const { studentAnswer, feedback, score } = await gradeWithGemini(base64Image, problemText, studentId);
+        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
+        
+        // Gọi hàm chấm bài
+        const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = 
+            await gradeWithGemini(base64Image, problemText, studentId);
+
         await saveProgress(studentId, score);
 
-        document.getElementById("result").innerHTML = feedback;
-        MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
+        // Hiển thị đầy đủ thông tin
+        document.getElementById("result").innerHTML = `
+            <p><strong>📌 Bài làm của học sinh:</strong><br>${studentAnswer}</p>
+            <p><strong>📝 Lời giải chi tiết:</strong><br>${detailedSolution}</p>
+            <p><strong>📊 Chấm điểm chi tiết:</strong><br>${gradingDetails}</p>
+            <p><strong>🏆 Điểm số:</strong> ${score}/10</p>
+            <p><strong>💡 Nhận xét:</strong><br>${feedback}</p>
+            <p><strong>🔧 Đề xuất cải thiện:</strong><br>${suggestions}</p>
+        `;
+
+        // Xử lý MathJax cho toàn bộ phần kết quả
+        MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
+            console.error("MathJax lỗi:", err)
+        );
 
         alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
         progressData[currentProblem.index] = true;
