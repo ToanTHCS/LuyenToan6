@@ -186,31 +186,41 @@ document.addEventListener("DOMContentLoaded", async function () {
     await initStudentPage();
 });
 // Hàm gửi yêu cầu API với API key
-async function makeApiRequest(apiUrl, requestBody) {
-    let attempts = 0;
-    while (attempts < apiKeys.length) {
-        const apiKey = getNextApiKey(); // Lấy API key từ danh sách
+async function makeApiRequest(url, body, maxRetries = 3, delay = 2000) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const response = await fetch(`${apiUrl}?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
             });
 
-            if (response.ok) {
-                return await response.json();
-            } else if (response.status === 403) {
-                console.log(`API key expired: ${apiKey}`);
-                attempts++;
-            } else {
+            if (response.status === 503) {
+                console.warn(`⚠️ Lần thử ${attempt}: Máy chủ tạm thời không phản hồi (503). Đợi ${delay / 1000}s...`);
+                await new Promise(res => setTimeout(res, delay));
+                continue;
+            }
+            
+            if (response.status === 429) {
+                console.warn(`⚠️ Lần thử ${attempt}: Gửi request quá nhanh (429). Đợi thêm...`);
+                await new Promise(res => setTimeout(res, delay));
+                continue;
+            }
+
+            if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
+
+            return await response.json();
+
         } catch (error) {
-            console.error('API error:', error);
-            attempts++;
+            console.error(`❌ API lỗi (lần thử ${attempt}):`, error);
+            if (attempt === maxRetries) throw new Error("Lỗi API sau nhiều lần thử.");
+            await new Promise(res => setTimeout(res, delay)); // Đợi rồi thử lại
         }
     }
-    throw new Error('All API keys exhausted.');
 }
 function formatProblemText(problemText) {
     return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
