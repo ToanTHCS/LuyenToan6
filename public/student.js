@@ -322,8 +322,6 @@ Nếu không thể nhận diện hoặc lỗi, trả về JSON:
 }
 
 // Hàm khi nhấn nút "Chấm bài"
-let isGrading = false; // Trạng thái chống spam
-
 document.getElementById("submitBtn").addEventListener("click", async () => {
     if (isGrading) {
         alert("⏳ Hệ thống đang chấm bài, vui lòng đợi...");
