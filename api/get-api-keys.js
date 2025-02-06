@@ -3,7 +3,6 @@ export default async function handler(req, res) {
     if (req.method !== "GET") {
         return res.status(405).json({ error: "Only GET method is allowed" });
     }
-
     try {
         const apiKeys = [
             process.env.API_K1, process.env.API_K2, process.env.API_K3,
