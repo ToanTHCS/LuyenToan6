@@ -4,7 +4,7 @@ let apiKeys = [];  // Biến lưu API keys
 let base64Image = ""; // Biến toàn cục để lưu ảnh bài làm
 let progressData = {}; // Biến lưu tiến trình học sinh
 let currentProblem = null; // Biến lưu bài tập hiện tại
-let isGrading = false; // Trạng thái chống spam
+
 // Tải API keys từ server
 async function loadApiKeys() {
     try {
@@ -19,7 +19,7 @@ async function loadApiKeys() {
         if (apiKeys.length === 0) {
             console.error("Không có API keys hợp lệ.");
         } else {
-            console.log(Có ${apiKeys.length} API keys hợp lệ.);
+            console.log(`Có ${apiKeys.length} API keys hợp lệ.`);
         }
     } catch (error) {
         console.error('Lỗi khi tải API keys:', error);
@@ -35,14 +35,14 @@ async function initStudentPage() {
         return;
     }
 
-    console.log(🔹 Đang tải dữ liệu học sinh: ${studentId});
+    console.log(`🔹 Đang tải dữ liệu học sinh: ${studentId}`);
     await loadStudentData(studentId);
     await loadProblems();
     await loadProgress(studentId);
     console.log("✅ Trang học sinh đã khởi tạo hoàn tất!");
 }
 
-// Hàm tải dữ liệu học sinh từ students.json
+// Hàm tải dữ liệu học sinh từ `students.json`
 const loadStudentData = async (studentId) => {
     try {
         const response = await fetch('/api/get-students');
@@ -65,7 +65,7 @@ const loadStudentData = async (studentId) => {
     }
 };
 
-// Hàm tải danh sách bài tập từ problems.json
+// Hàm tải danh sách bài tập từ `problems.json`
 const loadProblems = async () => {
     try {
         const response = await fetch('/api/get-problems');
@@ -125,10 +125,10 @@ function displayProblem(problem) {
 // Tải tiến trình học sinh
 async function loadProgress(studentId) {
     try {
-        const response = await fetch(/api/get-progress?studentId=${studentId});
+        const response = await fetch(`/api/get-progress?studentId=${studentId}`);
         const progress = await response.json();
         progressData = progress || {}; // Lưu vào biến toàn cục
-        console.log(✅ Tiến trình của học sinh ${studentId}:, progressData);
+        console.log(`✅ Tiến trình của học sinh ${studentId}:`, progressData);
         updateProgressUI();
     } catch (error) {
         console.error("❌ Lỗi khi tải tiến trình:", error);
@@ -141,7 +141,7 @@ function updateProgressUI() {
     document.getElementById("averageScore").textContent = progressData.averageScore || 0;
 }
 
-// Lưu tiến trình học sinh vào progress.json
+// Lưu tiến trình học sinh vào `progress.json`
 async function saveProgress(studentId, score) {
     try {
         let completedExercises = progressData.completedExercises || 0;
@@ -158,7 +158,7 @@ async function saveProgress(studentId, score) {
             body: JSON.stringify({ studentId, completedExercises, averageScore })
         });
 
-        console.log(✅ Tiến trình đã được cập nhật: ${completedExercises} bài, Điểm TB: ${averageScore.toFixed(2)});
+        console.log(`✅ Tiến trình đã được cập nhật: ${completedExercises} bài, Điểm TB: ${averageScore.toFixed(2)}`);
     } catch (error) {
         console.error("❌ Lỗi khi lưu tiến trình:", error);
     }
@@ -186,79 +186,62 @@ document.addEventListener("DOMContentLoaded", async function () {
     await initStudentPage();
 });
 // Hàm gửi yêu cầu API với API key
-async function makeApiRequest(url, body, maxRetries = 3, delay = 2000) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+async function makeApiRequest(apiUrl, requestBody) {
+    let attempts = 0;
+    while (attempts < apiKeys.length) {
+        const apiKey = getNextApiKey(); // Lấy API key từ danh sách
         try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(body)
+            const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
             });
 
-            if (response.status === 503) {
-                console.warn(⚠️ Lần thử ${attempt}: Máy chủ tạm thời không phản hồi (503). Đợi ${delay / 1000}s...);
-                await new Promise(res => setTimeout(res, delay));
-                continue;
+            if (response.ok) {
+                return await response.json();
+            } else if (response.status === 403) {
+                console.log(`API key expired: ${apiKey}`);
+                attempts++;
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
-            if (response.status === 429) {
-                console.warn(⚠️ Lần thử ${attempt}: Gửi request quá nhanh (429). Đợi thêm...);
-                await new Promise(res => setTimeout(res, delay));
-                continue;
-            }
-
-            if (!response.ok) {
-                throw new Error(HTTP error! status: ${response.status});
-            }
-
-            return await response.json();
-
         } catch (error) {
-            console.error(❌ API lỗi (lần thử ${attempt}):, error);
-            if (attempt === maxRetries) throw new Error("Lỗi API sau nhiều lần thử.");
-            await new Promise(res => setTimeout(res, delay)); // Đợi rồi thử lại
+            console.error('API error:', error);
+            attempts++;
         }
     }
-}
-function formatProblemText(problemText) {
-    return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
+    throw new Error('All API keys exhausted.');
 }
 // Hàm gọi API Gemini để chấm bài
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
+    
+    // Prompt yêu cầu AI trả về đúng 6 dòng
+    const promptText = `
+    Học sinh: ${studentId}
+    Đề bài:
+    ${problemText}
+    
+    Hãy thực hiện các bước sau:
+    1. Nhận diện và gõ lại bài làm của học sinh từ hình ảnh thành văn bản một cách chính xác, tất cả công thức Toán viết dưới dạng Latex, bọc trong dấu $, không tự suy luận nội dung hình ảnh, chỉ gõ lại chính xác các nội dung nhận diện được từ hình ảnh.
+    2. Giải bài toán và cung cấp lời giải chi tiết cho từng phần, lời giải phù hợp học sinh lớp 7 học theo chương trình 2018.
+    3. So sánh bài làm của học sinh với đáp án đúng, chấm chi tiết từng bước làm đến kết quả.
+    4. Chấm điểm bài làm của học sinh trên thang điểm 10, cho 0 điểm với bài giải không đúng yêu cầu đề bài. Giải thích chi tiết cách tính điểm cho từng phần.
+    5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
+    6. Kiểm tra lại kết quả chấm điểm và đảm bảo tính nhất quán giữa bài làm, lời giải, và điểm số.
+    
+    🚨 KẾT QUẢ PHẢI TRẢ VỀ ĐÚNG 6 DÒNG, THEO ĐỊNH DẠNG SAU:
+    1. Bài làm của học sinh: [Bài làm được nhận diện từ hình ảnh]
+    2. Lời giải chi tiết: [Lời giải từng bước]
+    3. Chấm điểm chi tiết: [Giải thích cách chấm điểm]
+    4. Điểm số: [Điểm trên thang điểm 10]
+    5. Nhận xét: [Nhận xét chi tiết]
+    6. Đề xuất cải thiện: [Các đề xuất cụ thể]
 
-    // Format đề bài trước khi gửi lên API
-    const formattedProblemText = formatProblemText(problemText);
-
-    const promptText = 
-Học sinh: ${studentId}
-Đề bài:
-${formattedProblemText}
-
-Hãy thực hiện các bước sau:
-1. Nhận diện bài làm của học sinh từ hình ảnh và gõ lại dưới dạng văn bản, công thức Toán viết bằng Latex ($...$).
-2. Giải bài toán và cung cấp lời giải chi tiết theo chương trình lớp 7.
-3. So sánh bài làm của học sinh với đáp án đúng, chấm điểm chi tiết.
-4. Chấm điểm trên thang 10, nếu sai hoàn toàn thì cho 0 điểm.
-5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
-6. Trả về kết quả **đúng định dạng JSON** sau, không thêm nội dung thừa:
-
-{
-  "studentAnswer": "[Nội dung nhận diện]",
-  "detailedSolution": "[Lời giải từng bước]",
-  "gradingDetails": "[Giải thích cách chấm]",
-  "score": [Số từ 0-10],
-  "feedback": "[Nhận xét chi tiết]",
-  "suggestions": "[Các đề xuất]"
-}
-
-Nếu không thể nhận diện hoặc lỗi, trả về JSON:
-{
-  "error": "Không thể xử lý hình ảnh hoặc nhận diện bài làm."
-}
-    ;
+    ❗Nếu không thể nhận diện hình ảnh hoặc có lỗi, hãy trả về "Không thể xử lý".
+    ❗Điểm số phải là số từ 0 đến 10, có thể có một chữ số thập phân.
+    ❗Nếu có sự không nhất quán giữa bài làm và điểm số, hãy giải thích rõ lý do.
+    `;
 
     const requestBody = {
         contents: [
@@ -273,68 +256,47 @@ Nếu không thể nhận diện hoặc lỗi, trả về JSON:
 
     try {
         const data = await makeApiRequest(apiUrl, requestBody);
-
-        console.log("🔍 Full API Response:", JSON.stringify(data, null, 2));
-
-        if (!data?.candidates?.length || !data.candidates[0]?.content?.parts?.length) {
-            throw new Error("API không trả về dữ liệu hợp lệ.");
+        const response = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!response) {
+            throw new Error('Không nhận được phản hồi hợp lệ từ API');
         }
 
-        let responseText = data.candidates[0].content.parts[0].text;
+        // Chia kết quả thành các dòng riêng biệt
+        const lines = response.split("\n").map(line => line.trim()).filter(line => line !== "");
 
-        if (!responseText) {
-            throw new Error("API trả về phản hồi rỗng.");
-        }
-
-        // Kiểm tra nếu API trả về lỗi
-        if (responseText.includes("Không thể xử lý")) {
-            throw new Error("Không thể nhận diện hoặc xử lý hình ảnh.");
-        }
-
-        // Cố gắng parse JSON từ phản hồi API
-        let jsonResponse;
-        try {
-            jsonResponse = JSON.parse(responseText);
-        } catch (jsonError) {
-            console.error("❌ Lỗi khi parse JSON từ API:", jsonError);
-            console.log("Dữ liệu API nhận được:", responseText);
-            throw new Error("API không trả về đúng định dạng JSON.");
-        }
-
-        // Kiểm tra nếu JSON hợp lệ và đủ dữ liệu
-        if (!jsonResponse.studentAnswer || !jsonResponse.detailedSolution || !jsonResponse.gradingDetails || 
-            typeof jsonResponse.score !== "number" || !jsonResponse.feedback || !jsonResponse.suggestions) {
-            console.error("❌ API trả về dữ liệu thiếu:", jsonResponse);
-            throw new Error("API không trả về đủ thông tin cần thiết.");
-        }
+        // Đảm bảo có đủ 6 dòng, nếu không thì gán giá trị mặc định
+        const studentAnswer = lines[0]?.replace("Bài làm của học sinh:", "").trim() || "Không thể xử lý";
+        const detailedSolution = lines[1]?.replace("Lời giải chi tiết:", "").trim() || "Không thể xử lý";
+        const gradingDetails = lines[2]?.replace("Chấm điểm chi tiết:", "").trim() || "Không thể xử lý";
+        const score = parseFloat(lines[3]?.replace("Điểm số:", "").trim()) || 0;
+        const feedback = lines[4]?.replace("Nhận xét:", "").trim() || "Không thể xử lý";
+        const suggestions = lines[5]?.replace("Đề xuất cải thiện:", "").trim() || "Không thể xử lý";
 
         return {
-            studentAnswer: jsonResponse.studentAnswer.trim() || "Không có dữ liệu",
-            detailedSolution: jsonResponse.detailedSolution.trim() || "Không có dữ liệu",
-            gradingDetails: jsonResponse.gradingDetails.trim() || "Không có dữ liệu",
-            score: jsonResponse.score || 0,
-            feedback: jsonResponse.feedback.trim() || "Không có dữ liệu",
-            suggestions: jsonResponse.suggestions.trim() || "Không có dữ liệu"
+            studentAnswer,
+            detailedSolution,
+            gradingDetails,
+            score,
+            feedback,
+            suggestions
         };
 
     } catch (error) {
-        console.error('Lỗi:', error.message);
+        console.error('Lỗi:', error);
         return {
             studentAnswer: "Lỗi xử lý",
             detailedSolution: "Lỗi xử lý",
             gradingDetails: "Lỗi xử lý",
             score: 0,
-            feedback: Lỗi: ${error.message},
+            feedback: `Đã xảy ra lỗi: ${error.message}`,
             suggestions: "Lỗi xử lý"
         };
     }
 }
-document.getElementById("submitBtn").addEventListener("click", async () => {
-    if (isGrading) {
-        alert("⏳ Hệ thống đang chấm bài, vui lòng đợi...");
-        return;
-    }
 
+// Hàm khi nhấn nút "Chấm bài"
+document.getElementById("submitBtn").addEventListener("click", async () => {
     if (!currentProblem) {
         alert("⚠ Vui lòng chọn bài tập trước khi chấm.");
         return;
@@ -349,57 +311,32 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         return;
     }
 
-    let base64Image = null;
-
-    if (studentFileInput.files.length > 0) {
-        try {
-            base64Image = await getBase64(studentFileInput.files[0]);
-        } catch (error) {
-            alert("❌ Lỗi khi xử lý ảnh. Vui lòng thử lại.");
-            console.error("Lỗi khi chuyển ảnh sang Base64:", error);
-            return;
-        }
-    }
-
-    if (!base64Image) {
+    if (!base64Image && studentFileInput.files.length === 0) {
         alert("⚠ Vui lòng tải lên ảnh bài làm hoặc chụp ảnh từ camera.");
         return;
     }
 
+    if (!base64Image && studentFileInput.files.length > 0) {
+        base64Image = await getBase64(studentFileInput.files[0]);
+    }
+
     try {
-        isGrading = true;
-        document.getElementById("result").innerText = "🔄 Đang chấm bài...";
-
-        // Gọi API chấm bài
-        const { studentAnswer, detailedSolution, gradingDetails, score, feedback, suggestions } = 
-            await gradeWithGemini(base64Image, problemText, studentId);
-
+         document.getElementById("result").innerText = "🔄 Đang chấm bài...";
+        // Gọi lại hàm gradeWithGemini đã có
+        const { studentAnswer, feedback, score } = await gradeWithGemini(base64Image, problemText, studentId);
         await saveProgress(studentId, score);
 
-        // Hiển thị kết quả
-        document.getElementById("result").innerHTML = 
-            <p><strong>📌 Bài làm của học sinh:</strong><br>${studentAnswer}</p>
-            <p><strong>📝 Lời giải chi tiết:</strong><br>${detailedSolution}</p>
-            <p><strong>📊 Chấm điểm chi tiết:</strong><br>${gradingDetails}</p>
-            <p><strong>🏆 Điểm số:</strong> ${score}/10</p>
-            <p><strong>💡 Nhận xét:</strong><br>${feedback}</p>
-            <p><strong>🔧 Đề xuất cải thiện:</strong><br>${suggestions}</p>
-        ;
+        document.getElementById("result").innerHTML = feedback;
+        MathJax.typesetPromise([document.getElementById("result")]).catch(err => console.error("MathJax lỗi:", err));
 
-        // Xử lý MathJax nếu có
-        if (window.MathJax) {
-            MathJax.typesetPromise([document.getElementById("result")]).catch(err => 
-                console.error("MathJax lỗi:", err)
-            );
-        }
-
-        alert(✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.);
+        alert(`✅ Bài tập đã được chấm! Bạn đạt ${score}/10 điểm.`);
         progressData[currentProblem.index] = true;
         updateProgressUI();
     } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
-        document.getElementById("result").innerText = Lỗi: ${error.message};
-    } finally {
-        isGrading = false;
+        document.getElementById("result").innerText = `Lỗi: ${error.message}`;
     }
 });
+
+
+
