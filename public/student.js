@@ -219,91 +219,56 @@ async function makeApiRequest(apiUrl, requestBody) {
 // Hàm gọi API Gemini để chấm bài
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
-
-    // Format đề bài trước khi gửi lên API
-    const formattedProblemText = formatProblemText(problemText);
-
+    
     const promptText = `
 Học sinh: ${studentId}
 Đề bài:
-${formattedProblemText}
+${problemText}
 
 Hãy thực hiện các bước sau:
-1. Cố gắng nhận diện bài làm của học sinh từ hình ảnh, ngay cả khi hình ảnh không rõ ràng. 
-2. Nếu không chắc chắn, hãy đoán nội dung gần nhất có thể.
-3. Nếu bài làm sai, vẫn trả về kết quả với nhận xét phù hợp thay vì nói "Không thể nhận diện".
-4. Giải bài toán và đưa ra lời giải chi tiết theo chương trình lớp 7.
-5. So sánh bài làm của học sinh với đáp án đúng và chấm điểm.
-6. Chấm điểm trên thang 10, nếu sai hoàn toàn thì cho 0 điểm.
-7. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
-8. Trả về đúng định dạng JSON sau:
+1. Nhận diện bài làm từ ảnh và chuyển thành văn bản.
+2. Giải bài toán và đưa ra lời giải chi tiết.
+3. So sánh bài làm của học sinh với đáp án đúng.
+4. Chấm điểm theo thang 10.
+5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
 
+Định dạng phản hồi JSON:
 {
   "studentAnswer": "[Nội dung nhận diện]",
   "detailedSolution": "[Lời giải từng bước]",
-  "gradingDetails": "[Giải thích cách chấm]",
+  "gradingDetails": "[Cách chấm điểm]",
   "score": [Số từ 0-10],
   "feedback": "[Nhận xét chi tiết]",
-  "suggestions": "[Các đề xuất]"
+  "suggestions": "[Đề xuất cải thiện]"
 }
-
-Nếu không thể nhận diện hoặc lỗi, vẫn phải trả về JSON hợp lệ với studentAnswer là "Không rõ".
 `;
-
-    console.log("📡 Đang gửi yêu cầu API với prompt:");
-    console.log(promptText);
-
-    // Loại bỏ tiền tố "data:image/jpeg;base64," để đảm bảo đúng định dạng Google yêu cầu
-    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
-    console.log("📷 Base64 gửi đi (đã loại bỏ tiền tố):", base64Data.substring(0, 100) + "...");
 
     const requestBody = {
         contents: [
             {
                 parts: [
                     { text: promptText },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Data } } // Dữ liệu ảnh chuẩn
+                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
                 ]
             }
         ]
     };
 
-    console.log("📡 Dữ liệu gửi lên API:", JSON.stringify(requestBody, null, 2));
-
     try {
         const data = await makeApiRequest(apiUrl, requestBody);
-
-        console.log("📡 Phản hồi API ngay sau khi gửi:", JSON.stringify(data, null, 2));
-
         if (!data?.candidates?.length || !data.candidates[0]?.content?.parts?.length) {
             throw new Error("API không trả về dữ liệu hợp lệ.");
         }
 
         let responseText = data.candidates[0].content.parts[0].text;
 
-        if (!responseText) {
-            throw new Error("API trả về phản hồi rỗng.");
-        }
-
         // 👉 Tìm JSON hợp lệ trong phản hồi
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            console.error("❌ API trả về dữ liệu không phải JSON hợp lệ:", responseText);
-            throw new Error("API không trả về đúng định dạng JSON.");
-        }
+        if (!jsonMatch) throw new Error("API không trả về đúng định dạng JSON.");
 
-        let jsonResponse;
-        try {
-            jsonResponse = JSON.parse(jsonMatch[0]); // Chỉ parse phần JSON tìm được
-        } catch (jsonError) {
-            console.error("❌ Lỗi khi parse JSON từ API:", jsonError);
-            console.log("Dữ liệu API nhận được:", responseText);
-            throw new Error("API không trả về đúng định dạng JSON.");
-        }
-
-        return jsonResponse;
+        return JSON.parse(jsonMatch[0]); // Trả về JSON hợp lệ
     } catch (error) {
-        console.error('❌ Lỗi khi xử lý API Gemini:', error);
+        console.error('Lỗi khi chấm bài:', error);
         return {
             studentAnswer: "Lỗi xử lý",
             detailedSolution: "Lỗi xử lý",
