@@ -206,40 +206,46 @@ async function makeApiRequest(apiUrl, requestBody) {
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
 
-    // 🛑 Sử dụng backtick (`) để tránh lỗi "Unexpected string"
+    // 🛑 Dùng backtick để đảm bảo chuỗi không bị lỗi
     const promptText = `
 Học sinh: ${studentId}
-Đề bài:
+📌 Đề bài:
 ${problemText}
 
-Hướng dẫn chấm bài:
-1. Nhận diện nội dung bài làm từ ảnh và chuyển thành văn bản rõ ràng.
-2. Giải bài toán theo yêu cầu đề bài và đưa ra lời giải chi tiết.
-3. So sánh bài làm của học sinh với đáp án đúng.
-4. Chấm điểm theo thang 10 dựa trên mức độ chính xác và cách trình bày.
-5. Đưa ra nhận xét chi tiết và đề xuất cải thiện để học sinh làm tốt hơn.
+🔹 **Yêu cầu chấm bài:**
+1️⃣ Nhận diện bài làm từ ảnh và gõ lại **chính xác từng ký tự, công thức Toán viết dưới dạng LaTeX**.
+2️⃣ Giải bài toán theo đúng yêu cầu đề bài, cung cấp lời giải **chi tiết từng bước**.
+3️⃣ So sánh bài làm của học sinh với đáp án đúng, **chấm điểm từng bước** theo mức độ chính xác.
+4️⃣ Chấm điểm trên thang **10**, cho **0 điểm nếu bài làm sai hoàn toàn hoặc không khớp đề bài**.
+5️⃣ Đưa ra **nhận xét chi tiết** về bài làm và **đề xuất cách cải thiện**.
 
-Lưu ý:
-- Nếu ảnh không rõ hoặc không thể nhận diện, hãy trả về "studentAnswer": "Không nhận diện được bài làm".
-- Nếu bài làm không liên quan đến đề bài, hãy chấm điểm thấp nhưng vẫn ghi nhận xét phù hợp.
+⚠ **Chú ý:**  
+- Không tự suy luận nội dung từ ảnh, chỉ gõ lại chính xác các nội dung nhận diện được.  
+- Nếu ảnh không rõ hoặc không thể nhận diện, hãy trả về:  
+\`\`\`json
+{ "studentAnswer": "Không nhận diện được bài làm", "score": 0 }
+\`\`\`
+- Nếu bài làm không khớp với đề bài, vẫn phải **chấm điểm công bằng** dựa trên nội dung học sinh làm được.
 
-Định dạng phản hồi JSON (bắt buộc):
+📌 **Định dạng JSON phản hồi bắt buộc:**
+\`\`\`json
 {
   "studentAnswer": "[Nội dung nhận diện từ ảnh]",
-  "detailedSolution": "[Lời giải từng bước của bài toán]",
-  "gradingDetails": "[Cách chấm điểm dựa trên bài làm của học sinh]",
+  "detailedSolution": "[Lời giải từng bước]",
+  "gradingDetails": "[Cách chấm điểm]",
   "score": [Số từ 0-10],
-  "feedback": "[Nhận xét chi tiết về bài làm]",
-  "suggestions": "[Gợi ý cải thiện cho học sinh]"
+  "feedback": "[Nhận xét chi tiết]",
+  "suggestions": "[Đề xuất cải thiện]"
 }
+\`\`\`
 `;
 
     const requestBody = {
         contents: [
             {
                 parts: [
-                    { text: promptText }, // 🛑 Đảm bảo sử dụng backtick (`) để tránh lỗi chuỗi
-                    { inline_data: { mime_type: "image/jpeg", data: base64Image } } // 🛑 Chỉ gửi dữ liệu Base64, không kèm tiền tố
+                    { text: promptText },
+                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
                 ]
             }
         ]
@@ -288,8 +294,6 @@ Lưu ý:
         };
     }
 }
-
-
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
 async function preprocessImage(imageFile) {
     return new Promise((resolve, reject) => {
