@@ -5,6 +5,7 @@ let base64Image = ""; // Biến toàn cục để lưu ảnh bài làm
 let progressData = {}; // Biến lưu tiến trình học sinh
 let currentProblem = null; // Biến lưu bài tập hiện tại
 let isGrading = false; // Biến trạng thái để chống spam
+let apiKey = ""; // Khai báo biến toàn cục để lưu API Key
 
 function formatProblemText(problemText) {
     return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
