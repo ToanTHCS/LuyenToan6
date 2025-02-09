@@ -9,24 +9,22 @@ let isGrading = false; // Biến trạng thái để chống spam
 function formatProblemText(problemText) {
     return problemText.replace(/\n/g, '<br>').replace(/([a-d]\))/g, '<br>$1');
 }
-// Tải API keys từ server
-async function loadApiKeys() {
+// Tải API key từ server
+async function loadApiKey() {
     try {
         const response = await fetch('/api/get-api-keys'); // Gọi API get-api-keys
         if (!response.ok) {
-            throw new Error('Không thể tải API keys');
+            throw new Error('Không thể tải API key');
         }
         const data = await response.json();
-        apiKeys = data.apiKeys;  // Lấy dữ liệu API keys
-        console.log('API Keys:', apiKeys);
+        apiKey = data.apiKey;  // Lưu API key duy nhất
+        console.log('✅ API Key:', apiKey);
 
-        if (apiKeys.length === 0) {
-            console.error("Không có API keys hợp lệ.");
-        } else {
-            console.log(`Có ${apiKeys.length} API keys hợp lệ.`);
+        if (!apiKey) {
+            console.error("Không có API Key hợp lệ.");
         }
     } catch (error) {
-        console.error('Lỗi khi tải API keys:', error);
+        console.error('❌ Lỗi khi tải API Key:', error);
     }
 }
 
@@ -178,44 +176,30 @@ function getBase64(file) {
     });
 }
 
-// Hàm lấy API key tiếp theo từ danh sách
-function getNextApiKey() {
-    const apiKey = apiKeys[currentKeyIndex];
-    currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
-    return apiKey;
-}
-
 document.addEventListener("DOMContentLoaded", async function () {
-    await loadApiKeys(); // Tải API keys khi trang được tải
+    await loadApiKey(); // Tải API keys khi trang được tải
     await initStudentPage();
 });
-// Hàm gửi yêu cầu API với API key
+// Hàm gửi yêu cầu API với API Key
 async function makeApiRequest(apiUrl, requestBody) {
-    let attempts = 0;
-    while (attempts < apiKeys.length) {
-        const apiKey = getNextApiKey(); // Lấy API key từ danh sách
-        try {
-            const response = await fetch(`${apiUrl}?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestBody),
-            });
+    try {
+        const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+        });
 
-            if (response.ok) {
-                return await response.json();
-            } else if (response.status === 403) {
-                console.log(`API key expired: ${apiKey}`);
-                attempts++;
-            } else {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-        } catch (error) {
-            console.error('API error:', error);
-            attempts++;
+        if (response.ok) {
+            return await response.json();
+        } else {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+    } catch (error) {
+        console.error('❌ API error:', error);
+        throw error;
     }
-    throw new Error('All API keys exhausted.');
 }
+
 // Hàm gọi API Gemini để chấm bài
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
