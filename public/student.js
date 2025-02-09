@@ -205,28 +205,34 @@ async function makeApiRequest(apiUrl, requestBody) {
 // Hàm gọi API Gemini để chấm bài
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
-    
+
     const promptText = `
 Học sinh: ${studentId}
 Đề bài:
 ${problemText}
 
 Hãy thực hiện các bước sau:
-1. Nhận diện bài làm từ ảnh và chuyển thành văn bản.
-2. Giải bài toán và đưa ra lời giải chi tiết.
-3. So sánh bài làm của học sinh với đáp án đúng.
-4. Chấm điểm theo thang 10.
-5. Đưa ra nhận xét chi tiết và đề xuất cải thiện.
+1️⃣ **Nhận diện nội dung bài làm từ ảnh và chuyển thành văn bản rõ ràng.**
+2️⃣ **Giải bài toán theo yêu cầu đề bài và đưa ra lời giải chi tiết.**
+3️⃣ **So sánh bài làm của học sinh với đáp án đúng.**
+4️⃣ **Chấm điểm theo thang 10 dựa trên mức độ chính xác và cách trình bày.**
+5️⃣ **Đưa ra nhận xét chi tiết và đề xuất cải thiện để học sinh làm tốt hơn.**
 
-Định dạng phản hồi JSON:
+⚠ **Lưu ý quan trọng:**  
+- Nếu ảnh không rõ hoặc không thể nhận diện, hãy ghi `"studentAnswer": "Không nhận diện được bài làm"`.  
+- Nếu bài làm không liên quan đến đề bài, hãy đưa ra nhận xét nhưng vẫn chấm điểm theo mức độ liên quan.
+
+📌 **Định dạng phản hồi JSON (phải đúng cấu trúc này):**
+\`\`\`json
 {
-  "studentAnswer": "[Nội dung nhận diện]",
-  "detailedSolution": "[Lời giải từng bước]",
-  "gradingDetails": "[Cách chấm điểm]",
+  "studentAnswer": "[Nội dung nhận diện từ ảnh]",
+  "detailedSolution": "[Lời giải từng bước của bài toán]",
+  "gradingDetails": "[Cách chấm điểm dựa trên bài làm của học sinh]",
   "score": [Số từ 0-10],
-  "feedback": "[Nhận xét chi tiết]",
-  "suggestions": "[Đề xuất cải thiện]"
+  "feedback": "[Nhận xét chi tiết về bài làm]",
+  "suggestions": "[Gợi ý cải thiện cho học sinh]"
 }
+\`\`\`
 `;
 
     const requestBody = {
@@ -240,21 +246,39 @@ Hãy thực hiện các bước sau:
         ]
     };
 
+    console.log("📌 Đang gửi request đến Gemini API...");
+    console.log(JSON.stringify(requestBody, null, 2));
+
     try {
         const data = await makeApiRequest(apiUrl, requestBody);
+
         if (!data?.candidates?.length || !data.candidates[0]?.content?.parts?.length) {
             throw new Error("API không trả về dữ liệu hợp lệ.");
         }
 
         let responseText = data.candidates[0].content.parts[0].text;
+        console.log("📌 Phản hồi từ API:", responseText);
 
         // 👉 Tìm JSON hợp lệ trong phản hồi
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("API không trả về đúng định dạng JSON.");
 
-        return JSON.parse(jsonMatch[0]); // Trả về JSON hợp lệ
+        const parsedResponse = JSON.parse(jsonMatch[0]);
+
+        // 🛑 Kiểm tra nếu `studentAnswer` rỗng
+        if (!parsedResponse.studentAnswer || parsedResponse.studentAnswer.trim() === "") {
+            console.warn("⚠ API không nhận diện được bài làm từ ảnh.");
+            parsedResponse.studentAnswer = "⚠ Không nhận diện được bài làm. Vui lòng kiểm tra lại ảnh.";
+            parsedResponse.score = 0;
+            parsedResponse.feedback = "Hệ thống không thể nhận diện bài làm của bạn từ ảnh. Hãy thử tải lên ảnh rõ ràng hơn.";
+            parsedResponse.suggestions = "Vui lòng sử dụng ảnh có độ phân giải cao, không bị mờ hoặc bị che khuất.";
+        }
+
+        console.log("📌 Kết quả chấm bài sau khi xử lý:", parsedResponse);
+        return parsedResponse;
+
     } catch (error) {
-        console.error('Lỗi khi chấm bài:', error);
+        console.error('❌ Lỗi khi chấm bài:', error);
         return {
             studentAnswer: "Lỗi xử lý",
             detailedSolution: "Lỗi xử lý",
