@@ -234,3 +234,25 @@ h1 {
         width: 100%;
     }
 }
+.result-box {
+    max-width: 100%;
+    overflow-x: auto;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+.result-box h3 {
+    color: #0056b3;
+    margin-top: 10px;
+}
+
+.result-box pre {
+    background: #fff;
+    padding: 8px;
+    border-radius: 5px;
+    overflow-x: auto;
+    white-space: pre-wrap; /* Đảm bảo nội dung không bị tràn */
+}
