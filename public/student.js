@@ -181,6 +181,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 // Hàm gửi yêu cầu API với API Key
 async function makeApiRequest(apiUrl, requestBody) {
+    console.log("🔹 Đang gửi request đến Gemini API:", JSON.stringify(requestBody, null, 2)); // Log request
     try {
         const response = await fetch(`${apiUrl}?key=${apiKey}`, {
             method: 'POST',
@@ -188,11 +189,13 @@ async function makeApiRequest(apiUrl, requestBody) {
             body: JSON.stringify(requestBody),
         });
 
-        if (response.ok) {
-            return await response.json();
-        } else {
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ API lỗi ${response.status}:`, errorText); // Log lỗi chi tiết
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        return await response.json();
     } catch (error) {
         console.error('❌ API error:', error);
         throw error;
