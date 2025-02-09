@@ -203,97 +203,46 @@ async function makeApiRequest(apiUrl, requestBody) {
 }
 
 // Hàm gọi API Gemini để chấm bài
-async function gradeWithGemini(base64Image, problemText, studentId) {
-    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
+function displayResult(response) {
+    const resultContainer = document.getElementById("result");
 
-    // 🛑 Dùng backtick để đảm bảo chuỗi không bị lỗi
-    const promptText = `
-Học sinh: ${studentId}
-📌 Đề bài:
-${problemText}
-
-🔹 **Yêu cầu chấm bài:**
-1️⃣ Nhận diện bài làm từ ảnh và gõ lại **chính xác từng ký tự, công thức Toán viết dưới dạng LaTeX**.
-2️⃣ Giải bài toán theo đúng yêu cầu đề bài, cung cấp lời giải **chi tiết từng bước**.
-3️⃣ So sánh bài làm của học sinh với đáp án đúng, **chấm điểm từng bước** theo mức độ chính xác.
-4️⃣ Chấm điểm trên thang **10**, cho **0 điểm nếu bài làm sai hoàn toàn hoặc không khớp đề bài**.
-5️⃣ Đưa ra **nhận xét chi tiết** về bài làm và **đề xuất cách cải thiện**.
-
-⚠ **Chú ý:**  
-- Không tự suy luận nội dung từ ảnh, chỉ gõ lại chính xác các nội dung nhận diện được.  
-- Nếu ảnh không rõ hoặc không thể nhận diện, hãy trả về:  
-\`\`\`json
-{ "studentAnswer": "Không nhận diện được bài làm", "score": 0 }
-\`\`\`
-- Nếu bài làm không khớp với đề bài, vẫn phải **chấm điểm công bằng** dựa trên nội dung học sinh làm được.
-
-📌 **Định dạng JSON phản hồi bắt buộc:**
-\`\`\`json
-{
-  "studentAnswer": "[Nội dung nhận diện từ ảnh]",
-  "detailedSolution": "[Lời giải từng bước]",
-  "gradingDetails": "[Cách chấm điểm]",
-  "score": [Số từ 0-10],
-  "feedback": "[Nhận xét chi tiết]",
-  "suggestions": "[Đề xuất cải thiện]"
-}
-\`\`\`
-`;
-
-    const requestBody = {
-        contents: [
-            {
-                parts: [
-                    { text: promptText },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
-                ]
-            }
-        ]
-    };
-
-    console.log("📌 Đang gửi request đến Gemini API...");
-    console.log(JSON.stringify(requestBody, null, 2));
-
-    try {
-        const data = await makeApiRequest(apiUrl, requestBody);
-
-        if (!data?.candidates?.length || !data.candidates[0]?.content?.parts?.length) {
-            throw new Error("API không trả về dữ liệu hợp lệ.");
-        }
-
-        let responseText = data.candidates[0].content.parts[0].text;
-        console.log("📌 Phản hồi từ API:", responseText);
-
-        // 🛑 Tìm JSON hợp lệ trong phản hồi từ API
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("API không trả về đúng định dạng JSON.");
-
-        const parsedResponse = JSON.parse(jsonMatch[0]);
-
-        // 🛑 Kiểm tra nếu `studentAnswer` rỗng
-        if (!parsedResponse.studentAnswer || parsedResponse.studentAnswer.trim() === "") {
-            console.warn("⚠ API không nhận diện được bài làm từ ảnh.");
-            parsedResponse.studentAnswer = "⚠ Không nhận diện được bài làm. Vui lòng kiểm tra lại ảnh.";
-            parsedResponse.score = 0;
-            parsedResponse.feedback = "Hệ thống không thể nhận diện bài làm của bạn từ ảnh. Hãy thử tải lên ảnh rõ ràng hơn.";
-            parsedResponse.suggestions = "Vui lòng sử dụng ảnh có độ phân giải cao, không bị mờ hoặc bị che khuất.";
-        }
-
-        console.log("📌 Kết quả chấm bài sau khi xử lý:", parsedResponse);
-        return parsedResponse;
-
-    } catch (error) {
-        console.error('❌ Lỗi khi chấm bài:', error);
-        return {
-            studentAnswer: "Lỗi xử lý",
-            detailedSolution: "Lỗi xử lý",
-            gradingDetails: "Lỗi xử lý",
-            score: 0,
-            feedback: `Lỗi: ${error.message}`,
-            suggestions: "Lỗi xử lý"
-        };
+    if (!response || typeof response !== "object") {
+        resultContainer.innerHTML = "<p>❌ Lỗi: Không có dữ liệu phản hồi từ API.</p>";
+        return;
     }
+
+    // Định dạng lại các trường có chứa nhiều dòng
+    function formatText(text) {
+        return text.replace(/\n/g, "<br>");
+    }
+
+    const formattedResponse = `
+        <div class="result-box">
+            <h3>📌 Bài làm của học sinh:</h3>
+            <pre>${formatText(response.studentAnswer)}</pre>
+            
+            <h3>📝 Lời giải chi tiết:</h3>
+            <pre>${formatText(response.detailedSolution)}</pre>
+            
+            <h3>📊 Cách chấm điểm:</h3>
+            <pre>${formatText(response.gradingDetails)}</pre>
+            
+            <h3>🎯 Điểm số: ${response.score}/10</h3>
+            
+            <h3>📢 Nhận xét:</h3>
+            <pre>${formatText(response.feedback)}</pre>
+            
+            <h3>🔍 Gợi ý cải thiện:</h3>
+            <pre>${formatText(response.suggestions)}</pre>
+        </div>
+    `;
+
+    resultContainer.innerHTML = formattedResponse;
+
+    // Kích hoạt MathJax để hiển thị công thức toán
+    MathJax.typesetPromise([resultContainer]).catch(err => console.error("MathJax rendering error:", err));
 }
+
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
 async function preprocessImage(imageFile) {
     return new Promise((resolve, reject) => {
