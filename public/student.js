@@ -206,23 +206,24 @@ async function makeApiRequest(apiUrl, requestBody) {
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
 
+    // 🛑 Sử dụng backtick (`) để tránh lỗi "Unexpected string"
     const promptText = `
 Học sinh: ${studentId}
-Đề bài:
+📌 **Đề bài:**  
 ${problemText}
 
-Hãy thực hiện các bước sau:
-1️⃣ **Nhận diện nội dung bài làm từ ảnh và chuyển thành văn bản rõ ràng.**
-2️⃣ **Giải bài toán theo yêu cầu đề bài và đưa ra lời giải chi tiết.**
-3️⃣ **So sánh bài làm của học sinh với đáp án đúng.**
-4️⃣ **Chấm điểm theo thang 10 dựa trên mức độ chính xác và cách trình bày.**
-5️⃣ **Đưa ra nhận xét chi tiết và đề xuất cải thiện để học sinh làm tốt hơn.**
+🔹 **Hướng dẫn chấm bài:**  
+1️⃣ Nhận diện nội dung bài làm từ ảnh và chuyển thành văn bản rõ ràng.  
+2️⃣ Giải bài toán theo yêu cầu đề bài và đưa ra lời giải chi tiết.  
+3️⃣ So sánh bài làm của học sinh với đáp án đúng.  
+4️⃣ Chấm điểm theo thang 10 dựa trên mức độ chính xác và cách trình bày.  
+5️⃣ Đưa ra nhận xét chi tiết và đề xuất cải thiện để học sinh làm tốt hơn.  
 
-⚠ **Lưu ý quan trọng:**  
-- Nếu ảnh không rõ hoặc không thể nhận diện, hãy ghi `"studentAnswer": "Không nhận diện được bài làm"`.  
-- Nếu bài làm không liên quan đến đề bài, hãy đưa ra nhận xét nhưng vẫn chấm điểm theo mức độ liên quan.
+⚠ **Lưu ý:**  
+- Nếu ảnh không rõ hoặc không thể nhận diện, hãy trả về `"studentAnswer": "Không nhận diện được bài làm"`.  
+- Nếu bài làm không liên quan đến đề bài, hãy chấm điểm thấp nhưng vẫn ghi nhận xét phù hợp.  
 
-📌 **Định dạng phản hồi JSON (phải đúng cấu trúc này):**
+📌 **Định dạng phản hồi JSON (bắt buộc):**
 \`\`\`json
 {
   "studentAnswer": "[Nội dung nhận diện từ ảnh]",
@@ -239,8 +240,8 @@ Hãy thực hiện các bước sau:
         contents: [
             {
                 parts: [
-                    { text: promptText },
-                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+                    { text: promptText }, // 🛑 Đảm bảo sử dụng backtick (`) để tránh lỗi chuỗi
+                    { inline_data: { mime_type: "image/jpeg", data: base64Image } } // 🛑 Chỉ gửi dữ liệu Base64, không kèm tiền tố
                 ]
             }
         ]
@@ -259,7 +260,7 @@ Hãy thực hiện các bước sau:
         let responseText = data.candidates[0].content.parts[0].text;
         console.log("📌 Phản hồi từ API:", responseText);
 
-        // 👉 Tìm JSON hợp lệ trong phản hồi
+        // 🛑 Tìm JSON hợp lệ trong phản hồi từ API
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error("API không trả về đúng định dạng JSON.");
 
