@@ -1,6 +1,4 @@
 let currentKeyIndex = 0;  // Biến để theo dõi API key đang sử dụng
-let apiKeys = [];  // Biến lưu API keys
-
 let base64Image = ""; // Biến toàn cục để lưu ảnh bài làm
 let progressData = {}; // Biến lưu tiến trình học sinh
 let currentProblem = null; // Biến lưu bài tập hiện tại
