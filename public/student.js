@@ -315,7 +315,11 @@ async function preprocessImage(imageFile) {
 
                 console.log("✅ Ảnh đã xử lý thành công!");
 
-                resolve(canvas.toDataURL("image/jpeg"));
+                // Lấy dữ liệu Base64, loại bỏ tiền tố "data:image/jpeg;base64,"
+                const base64Image = canvas.toDataURL("image/jpeg").split(",")[1];
+                console.log("📌 Base64 đã xử lý:", base64Image.substring(0, 100) + "..."); // Log 100 ký tự đầu để kiểm tra
+
+                resolve(base64Image);
             };
 
             img.onerror = function (err) {
@@ -332,6 +336,7 @@ async function preprocessImage(imageFile) {
         reader.readAsDataURL(imageFile);
     });
 }
+
 
 // Hàm khi nhấn nút "Chấm bài"
 document.getElementById("submitBtn").addEventListener("click", async () => {
