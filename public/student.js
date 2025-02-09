@@ -209,22 +209,21 @@ async function gradeWithGemini(base64Image, problemText, studentId) {
     // 🛑 Sử dụng backtick (`) để tránh lỗi "Unexpected string"
     const promptText = `
 Học sinh: ${studentId}
-📌 **Đề bài:**  
+Đề bài:
 ${problemText}
 
-🔹 **Hướng dẫn chấm bài:**  
-1️⃣ Nhận diện nội dung bài làm từ ảnh và chuyển thành văn bản rõ ràng.  
-2️⃣ Giải bài toán theo yêu cầu đề bài và đưa ra lời giải chi tiết.  
-3️⃣ So sánh bài làm của học sinh với đáp án đúng.  
-4️⃣ Chấm điểm theo thang 10 dựa trên mức độ chính xác và cách trình bày.  
-5️⃣ Đưa ra nhận xét chi tiết và đề xuất cải thiện để học sinh làm tốt hơn.  
+Hướng dẫn chấm bài:
+1. Nhận diện nội dung bài làm từ ảnh và chuyển thành văn bản rõ ràng.
+2. Giải bài toán theo yêu cầu đề bài và đưa ra lời giải chi tiết.
+3. So sánh bài làm của học sinh với đáp án đúng.
+4. Chấm điểm theo thang 10 dựa trên mức độ chính xác và cách trình bày.
+5. Đưa ra nhận xét chi tiết và đề xuất cải thiện để học sinh làm tốt hơn.
 
-⚠ **Lưu ý:**  
-- Nếu ảnh không rõ hoặc không thể nhận diện, hãy trả về `"studentAnswer": "Không nhận diện được bài làm"`.  
-- Nếu bài làm không liên quan đến đề bài, hãy chấm điểm thấp nhưng vẫn ghi nhận xét phù hợp.  
+Lưu ý:
+- Nếu ảnh không rõ hoặc không thể nhận diện, hãy trả về "studentAnswer": "Không nhận diện được bài làm".
+- Nếu bài làm không liên quan đến đề bài, hãy chấm điểm thấp nhưng vẫn ghi nhận xét phù hợp.
 
-📌 **Định dạng phản hồi JSON (bắt buộc):**
-\`\`\`json
+Định dạng phản hồi JSON (bắt buộc):
 {
   "studentAnswer": "[Nội dung nhận diện từ ảnh]",
   "detailedSolution": "[Lời giải từng bước của bài toán]",
@@ -233,7 +232,6 @@ ${problemText}
   "feedback": "[Nhận xét chi tiết về bài làm]",
   "suggestions": "[Gợi ý cải thiện cho học sinh]"
 }
-\`\`\`
 `;
 
     const requestBody = {
@@ -290,6 +288,7 @@ ${problemText}
         };
     }
 }
+
 
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
 async function preprocessImage(imageFile) {
