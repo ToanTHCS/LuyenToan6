@@ -177,7 +177,7 @@ function getBase64(file) {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
-    await loadApiKey(); // Tải API keys khi trang được tải
+    await loadApiKey(); // Tải API Key duy nhất khi trang được tải
     await initStudentPage();
 });
 // Hàm gửi yêu cầu API với API Key
