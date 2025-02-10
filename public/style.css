@@ -229,54 +229,56 @@ h1 {
 .result-box {
     max-width: 100%;
     background: #ffffff;
-    padding: 8px; /* Giảm padding để không bị thừa khoảng trống */
+    padding: 10px;
     border-radius: 6px;
     font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    margin-top: 5px; /* Giảm khoảng cách với phần trên */
+    margin-top: 5px;
 }
 
 /* 🔹 Mỗi phần trong kết quả */
 .result-section {
-    margin-bottom: 4px; /* Giảm khoảng cách giữa các khung */
-    padding: 5px 8px; /* Giảm padding để nội dung gần tiêu đề hơn */
+    margin-bottom: 8px; /* Giảm khoảng cách giữa các phần */
+    padding: 5px 10px; /* Giảm padding để nội dung gần tiêu đề hơn */
     background-color: #f9f9f9;
     border-radius: 5px;
 }
 
 /* 🔹 Tiêu đề trong kết quả */
 .result-section h3 {
-    margin: 0 0 1px 0; /* Giảm khoảng cách giữa tiêu đề và nội dung */
-    font-size: 1em; /* Điều chỉnh kích thước nhỏ hơn một chút */
+    margin: 0;
+    padding: 5px 0; /* Giảm padding trên dưới để tiêu đề gần hơn với nội dung */
+    font-size: 1em;
     color: #d9534f;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 4px; /* Giảm khoảng cách giữa icon và chữ */
+    gap: 4px;
 }
 
 /* 🔹 Icon ghim trước tiêu đề */
 .result-section h3::before {
-   font-size: 0.85em; /* Giảm kích thước icon */
+    content: "📌";
+    font-size: 0.85em;
     display: inline-block;
-    margin-right: 2px;
+    margin-right: 4px;
 }
 
 /* 🔹 Nội dung bài chấm (pre) */
 .result-section pre {
     background-color: transparent;
-    padding: 3px; /* Giảm padding */
+    padding: 3px;
     border-radius: 4px;
     white-space: pre-wrap;
     word-wrap: break-word;
-    line-height: 1.2; /* Giảm khoảng cách dòng */
+    line-height: 1.3; /* Giảm khoảng cách giữa các dòng */
     margin: 0;
 }
 
-/* 🔹 Điều chỉnh khoảng cách dưới mỗi khung */
+/* 🔹 Giảm khoảng cách giữa các phần cuối cùng */
 .result-section:last-child {
-    margin-bottom: 0;
+    margin-bottom: 5px;
 }
 
 /* 🔹 Responsive cho màn hình nhỏ */
@@ -284,6 +286,9 @@ h1 {
     .result-box {
         padding: 6px;
     }
+    .result-section {
+        margin-bottom: 6px;
+        padding: 4px 8px;
+    }
 }
-
 
