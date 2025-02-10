@@ -334,9 +334,8 @@ function displayResult(response) {
                 <p>${formatText(response.gradingDetails)}</p>
             </div>
 
-            <div class="result-section score-box">
-                <h3>🎯 Điểm số:</h3>
-                <span>${response.score}/10</span>
+            <div class="result-section">
+                <h3>🎯 Điểm số: <span style="color: #d9534f;">${response.score}/10</span></h3>
             </div>
 
             <div class="result-section">
@@ -356,6 +355,7 @@ function displayResult(response) {
     // Kích hoạt MathJax để hiển thị công thức toán
     MathJax.typesetPromise([resultContainer]).catch(err => console.error("MathJax rendering error:", err));
 }
+
 
 
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
