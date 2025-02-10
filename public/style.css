@@ -268,12 +268,6 @@ h1 {
     line-height: 1.4;
     margin: 0; /* Loại bỏ margin dư thừa */
 }
-
-/* 🔹 Đảm bảo khoảng cách giữa các mục không quá lớn */
-.result-box .result-section:not(:last-child) {
-    margin-bottom: 6px;
-}
-
 /* 🔹 Responsive: Điều chỉnh trên thiết bị nhỏ */
 @media (max-width: 768px) {
     .result-box {
@@ -281,28 +275,27 @@ h1 {
     }
 }
 /* 🔹 Điều chỉnh khoảng cách giữa các phần */
+/* 🔹 Giảm khoảng cách giữa các phần nội dung */
 .result-box .result-section {
-    margin-bottom: 12px; /* Giữ khoảng cách hợp lý giữa các phần */
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e0e0e0; /* Thêm đường phân cách nhẹ */
+    margin-bottom: 6px; /* Giảm khoảng cách giữa các phần */
+    padding-bottom: 4px;
 }
 
-/* 🔹 Đảm bảo tiêu đề không bị đẩy quá xa */
+/* 🔹 Điều chỉnh tiêu đề */
 .result-box h3 {
-    margin-top: 4px;  /* Giảm khoảng cách từ trên xuống */
-    margin-bottom: 6px; /* Giữ khoảng cách nhỏ hơn với nội dung */
+    margin-top: 2px;  /* Giảm khoảng cách phía trên tiêu đề */
+    margin-bottom: 4px; /* Giữ tiêu đề gần nội dung hơn */
 }
 
-/* 🔹 Giữ nội dung gọn gàng */
-.result-box p {
+/* 🔹 Điều chỉnh phần nội dung */
+.result-box pre {
     margin: 0; /* Loại bỏ khoảng cách thừa */
-    padding: 4px 8px; /* Giữ padding nhẹ để dễ đọc */
+    padding: 6px 10px; /* Giữ padding nhỏ gọn */
 }
 
-/* 🔹 Loại bỏ đường phân cách cuối cùng */
+/* 🔹 Loại bỏ khoảng cách thừa ở phần cuối */
 .result-box .result-section:last-child {
     margin-bottom: 0;
     padding-bottom: 0;
-    border-bottom: none;
 }
 
