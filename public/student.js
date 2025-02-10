@@ -68,10 +68,6 @@ function displayProblemList(problems) {
         updateProblemColor();
 
         problemBox.addEventListener("click", async () => {
-            if (progressData[problem.index]) {
-                alert("📌 Bài tập này đã làm! Vui lòng chọn bài khác.");
-                return;
-            }
             displayProblem(problem);
         });
 
@@ -88,25 +84,7 @@ function displayProblem(problem) {
     MathJax.typesetPromise([document.getElementById("problemText")]).catch(err => console.error("MathJax lỗi:", err));
 }
 
-// 🔹 6. Tải tiến trình học sinh
-async function loadProgress(studentId) {
-    try {
-        const response = await fetch(`/api/get-progress?studentId=${studentId}`);
-        progressData = await response.json() || {};
-        console.log(`✅ Tiến trình của học sinh ${studentId}:`, progressData);
-        updateProgressUI();
-    } catch (error) {
-        console.error("❌ Lỗi khi tải tiến trình:", error);
-    }
-}
-
-// 🔹 7. Cập nhật tiến trình UI
-function updateProgressUI() {
-    document.getElementById("completedExercises").textContent = progressData.completedExercises || 0;
-    document.getElementById("averageScore").textContent = progressData.averageScore || 0;
-}
-
-// 🔹 8. Gọi API chấm bài
+// 🔹 6. Gọi Gemini API để chấm bài
 async function gradeWithGemini(base64Image, problemText, studentId) {
     const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-002:generateContent';
 
@@ -136,56 +114,65 @@ ${problemText}
 `;
 
     const requestBody = {
-        contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: base64Image } }] }]
+        contents: [
+            {
+                parts: [
+                    { text: promptText },
+                    { inline_data: { mime_type: "image/jpeg", data: base64Image } }
+                ]
+            }
+        ]
     };
 
+    console.log("📌 Đang gửi request đến Gemini API...");
+    
     try {
         const response = await fetch(`${apiUrl}?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody),
-        });
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        return JSON.parse(data.candidates[0].content.parts[0].text);
-    } catch (error) {
-        console.error('❌ API error:', error);
-        return { studentAnswer: "Lỗi xử lý", score: 0 };
-    }
-}
-
-// 🔹 9. Lưu tiến trình sau khi chấm bài
-async function saveProgress(studentId, score) {
-    try {
-        progressData.completedExercises = (progressData.completedExercises || 0) + 1;
-        progressData.averageScore = ((progressData.averageScore || 0) * (progressData.completedExercises - 1) + score) / progressData.completedExercises;
-
-        await fetch("/api/save-progress", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ studentId, completedExercises: progressData.completedExercises, averageScore: progressData.averageScore })
+            body: JSON.stringify(requestBody)
         });
 
-        console.log("✅ Tiến trình đã cập nhật:", progressData);
+        const data = await response.json();
+        console.log("📌 Phản hồi từ API:", data);
+        return data;
     } catch (error) {
-        console.error("❌ Lỗi khi lưu tiến trình:", error);
+        console.error("❌ Lỗi khi gọi API Gemini:", error);
+        return { score: 0, feedback: "Lỗi khi gọi AI.", suggestions: "Thử lại sau." };
     }
 }
 
-// 🔹 10. Khi nhấn "Chấm bài"
+// 🔹 7. Khi nhấn "Chấm bài"
 document.getElementById("submitBtn").addEventListener("click", async () => {
     if (isGrading || !currentProblem) return;
 
     const studentId = localStorage.getItem("studentId");
     const problemText = document.getElementById("problemText").innerText.trim();
+    const studentFileInput = document.getElementById("studentImage");
+
     if (!problemText) return alert("⚠ Đề bài chưa được tải.");
+
+    let base64Image = null;
+
+    if (studentFileInput.files.length > 0) {
+        try {
+            base64Image = await getBase64(studentFileInput.files[0]);
+        } catch (error) {
+            alert("❌ Lỗi khi xử lý ảnh.");
+            return;
+        }
+    }
+
+    if (!base64Image) {
+        alert("⚠ Vui lòng tải lên ảnh bài làm.");
+        return;
+    }
 
     try {
         isGrading = true;
         const response = await gradeWithGemini(base64Image, problemText, studentId);
         displayResult(response);
-        await saveProgress(studentId, response.score); // Cập nhật tiến trình
+        await saveProgress(studentId, currentProblem.index, response.score);
     } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
     } finally {
