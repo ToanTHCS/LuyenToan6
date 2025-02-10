@@ -225,88 +225,42 @@ h1 {
         width: 100%;
     }
 }
-/* 🔹 Cấu trúc khung kết quả chấm bài */
+/* Chỉnh sửa phần kết quả bài làm */
 .result-box {
     max-width: 100%;
-    background: #ffffff;
-    padding: 8px; /* Giữ padding vừa phải */
-    border-radius: 6px;
+    overflow-x: auto;
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
     font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    margin-top: 3px;
+    margin-top: 10px;  /* Điều chỉnh khoảng cách phía trên */
+    margin-bottom: 10px; /* Điều chỉnh khoảng cách phía dưới */
 }
 
-/* 🔹 Mỗi phần trong kết quả */
-.result-section {
-    margin-bottom: 2px; /* Giảm khoảng cách giữa các phần */
-    padding: 5px 6px; /* Giảm padding để nội dung gần tiêu đề hơn */
-    background-color: #f9f9f9;
-    border-radius: 5px;
-}
-
-/* 🔹 Tiêu đề trong từng phần */
-.result-section h3 {
-    margin: 0 0 2px 0; /* Giảm khoảng cách giữa tiêu đề và nội dung */
-    padding: 0; /* Xóa padding để giảm khoảng cách */
-    font-size: 1em;
+/* Điều chỉnh khoảng cách tiêu đề */
+.result-box h3 {
+    margin-bottom: 5px; /* Giảm khoảng cách giữa tiêu đề và nội dung */
+    margin-top: 0px; /* Giảm khoảng cách lề trên */
+    font-size: 1.1em;
     color: #d9534f;
-    font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px; /* Khoảng cách giữa icon và chữ */
 }
 
-/* 🔹 Icon trước tiêu đề */
-.result-section h3::before {
-    font-size: 0.85em;
-    display: inline-block;
-    margin-right: 4px;
+/* Thêm khoảng cách hợp lý giữa các phần */
+.result-section {
+    margin-bottom: 8px;
 }
 
-/* 🔹 Nội dung bài chấm */
-.result-section pre {
-    background-color: transparent;
-    padding: 0; /* Giảm padding để nội dung sát với tiêu đề */
-    border-radius: 4px;
+/* Điều chỉnh nội dung hiển thị trong các đoạn văn bản */
+.result-box p {
+    background-color: #f8f9fa;
+    padding: 8px;
+    border-radius: 5px;
     white-space: pre-wrap;
     word-wrap: break-word;
-    line-height: 1.3; /* Giảm khoảng cách giữa các dòng */
-    margin: 0;
+    line-height: 1.5; /* Điều chỉnh khoảng cách dòng */
 }
 
-/* 🔹 Giảm khoảng cách giữa các phần cuối */
-.result-section:last-child {
-    margin-bottom: 0;
-}
-
-/* 🔹 Điểm số nổi bật hơn */
-.score-box {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: #d9534f;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 0;
-}
-
-/* 🔹 Giảm khoảng cách giữa các phần */
-.result-box .result-section {
-    margin-bottom: 1px; /* Giảm khoảng cách tối đa */
-}
-
-/* 🔹 Responsive cho màn hình nhỏ */
-@media (max-width: 768px) {
-    .result-box {
-        padding: 6px;
-    }
-    .result-section {
-        margin-bottom: 2px;
-        padding: 3px 5px;
-    }
-}
-* {
-    margin: 0 !important;
-    padding: 0 !important;
-}
