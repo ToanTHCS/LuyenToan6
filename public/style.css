@@ -225,7 +225,7 @@ h1 {
         width: 100%;
     }
 }
-/* 🌟 Hiển thị khung kết quả chấm bài */
+/* 🌟 Khung chứa kết quả chấm bài */
 .result-box {
     max-width: 100%;
     overflow-x: auto;
@@ -235,13 +235,12 @@ h1 {
     font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    margin-top: 5px; /* Giữ khoảng cách với nội dung phía trên */
+    margin-top: 15px; /* Giảm khoảng cách phía trên */
 }
 
-/* 🔹 Tiêu đề trong `result-box` */
+/* 🔹 Tiêu đề trong kết quả */
 .result-box h3 {
-    margin-bottom: 5px;
-    margin-top: 8px;
+    margin: 8px 0 2px 0; /* Chỉ cách dòng dưới 2px */
     font-size: 1.1em;
     color: #d9534f;
     font-weight: 700;
@@ -249,14 +248,22 @@ h1 {
     align-items: center;
     gap: 6px;
 }
-
-/* 🔹 Nội dung bài chấm */
+/* 🔹 Nội dung bài chấm (pre) */
 .result-box pre {
     background-color: #f8f9fa;
-    padding: 10px;
+    padding: 8px;
     border-radius: 5px;
     white-space: pre-wrap;
     word-wrap: break-word;
-    line-height: 1.5;
+    line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
+    margin-top: 2px; /* Giảm khoảng cách giữa h3 và pre */
+}
+
+/* 🔹 Responsive: Điều chỉnh cho màn hình nhỏ */
+@media (max-width: 768px) {
+    .result-box {
+        padding: 10px;
+        margin-top: 10px;
+    }
 }
 
