@@ -312,7 +312,6 @@ function displayResult(response) {
         return;
     }
 
-    // Hàm định dạng nội dung hiển thị
     function formatText(text) {
         return text.replace(/\n/g, "<br>");
     }
@@ -351,10 +350,9 @@ function displayResult(response) {
     `;
 
     resultContainer.innerHTML = formattedResponse;
-
-    // Kích hoạt MathJax để hiển thị công thức toán nếu có
     MathJax.typesetPromise([resultContainer]).catch(err => console.error("MathJax rendering error:", err));
 }
+
 
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
 async function preprocessImage(imageFile) {
