@@ -335,7 +335,7 @@ function displayResult(response) {
             </div>
 
             <div class="result-section">
-                <h3>🎯 Điểm số: ${response.score}/10</h3>
+                <h3>🎯 Điểm số: <span style="color: #d9534f;">${response.score}/10</span></h3>
             </div>
 
             <div class="result-section">
