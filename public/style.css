@@ -235,12 +235,12 @@ h1 {
     font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
     box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    margin-top: 15px; /* Giảm khoảng cách phía trên */
+    margin-top: 15px;
 }
 
 /* 🔹 Tiêu đề trong kết quả */
 .result-box h3 {
-    margin: 8px 0 2px 0; /* Chỉ cách dòng dưới 2px */
+    margin: 5px 0 5px 0; /* Giảm khoảng cách trên & dưới */
     font-size: 1.1em;
     color: #d9534f;
     font-weight: 700;
@@ -248,6 +248,14 @@ h1 {
     align-items: center;
     gap: 6px;
 }
+
+/* 🔹 Icon ghim trước tiêu đề */
+.result-box h3::before {
+    font-size: 1em;
+    display: inline-block;
+    margin-right: 5px; /* Giữ khoảng cách nhỏ giữa icon và chữ */
+}
+
 /* 🔹 Nội dung bài chấm (pre) */
 .result-box pre {
     background-color: #f8f9fa;
@@ -256,7 +264,13 @@ h1 {
     white-space: pre-wrap;
     word-wrap: break-word;
     line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
-    margin-top: 2px; /* Giảm khoảng cách giữa h3 và pre */
+    margin-top: 0; /* Loại bỏ khoảng trống phía trên nội dung */
+    padding-top: 5px; /* Thêm chút padding trên */
+}
+
+/* 🔹 Căn chỉnh phần trắng phía dưới mỗi khung */
+.result-box:last-child {
+    margin-bottom: 10px;
 }
 
 /* 🔹 Responsive: Điều chỉnh cho màn hình nhỏ */
@@ -266,4 +280,3 @@ h1 {
         margin-top: 10px;
     }
 }
-
