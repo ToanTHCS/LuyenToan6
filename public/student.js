@@ -463,11 +463,10 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
 
         // Gọi API chấm bài
         const response = await gradeWithGemini(base64Image, problemText, studentId);
-        displayResult(response);
+        
         // Hiển thị kết quả
-        document.getElementById("result").innerHTML = `<pre>${JSON.stringify(response, null, 2)}</pre>`;
-
-    } catch (error) {
+        displayResult(response);
+       } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
         document.getElementById("result").innerText = `❌ Lỗi: ${error.message}`;
     } finally {
