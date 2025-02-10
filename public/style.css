@@ -138,15 +138,6 @@ h1 {
     background-color: #0056b3;
 }
 
-/* Kết quả chấm bài */
-#result {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
-}
-
 /* Upload ảnh bài làm */
 #studentImage {
     margin-top: 20px;
@@ -234,33 +225,59 @@ h1 {
         width: 100%;
     }
 }
+/* Kết quả chấm bài */
+#result {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔹 Điều chỉnh hiển thị kết quả chấm bài */
 .result-box {
     max-width: 100%;
     overflow-x: auto;
     background: #f8f9fa;
-    padding: 10px;
+    padding: 15px; /* Tăng padding để nhìn thoáng hơn */
     border-radius: 8px;
     font-family: monospace;
     white-space: pre-wrap;
 }
+
+/* 🔹 Giảm khoảng cách giữa tiêu đề và nội dung */
 .result-box h3 {
-    margin-bottom: 5px; /* Giảm khoảng cách giữa tiêu đề và nội dung */
-    font-size: 1.2em; /* Điều chỉnh kích thước chữ nếu cần */
-    color: #d9534f; /* Màu đỏ đẹp hơn */
+    margin-bottom: 3px; /* Giảm khoảng cách xuống còn 3px */
+    font-size: 1.1em; /* Điều chỉnh kích thước chữ */
+    color: #d9534f; /* Màu đỏ nổi bật */
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px; /* Khoảng cách giữa icon và chữ */
 }
 
-.result-box pre {
-    background-color: #f8f9fa; /* Nền xám nhẹ */
-    padding: 10px;
-    border-radius: 5px;
-    white-space: pre-wrap; /* Giữ định dạng xuống dòng */
-    word-wrap: break-word;
-}
-
+/* 🔹 Giảm chiều cao icon trước tiêu đề */
 .result-box h3::before {
-    content: "📌"; /* Icon Ghim */
-    font-size: 1.1em;
+    content: "📌";
+    font-size: 1em; /* Giảm kích thước icon để không bị đẩy dòng */
+    display: inline-block;
+}
+
+/* 🔹 Điều chỉnh khoảng cách giữa các dòng trong pre */
+.result-box pre {
+    background-color: #f8f9fa; /* Màu nền nhẹ */
+    padding: 8px; /* Giảm padding để không bị tràn */
+    border-radius: 5px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
+}
+
+/* 🔹 Responsive cho màn hình nhỏ */
+@media (max-width: 768px) {
+    #mainContent {
+        padding: 10px;
+    }
+    .result-box {
+        padding: 10px; /* Giảm padding để vừa với màn hình nhỏ */
+    }
 }
