@@ -312,7 +312,7 @@ function displayResult(response) {
         return;
     }
 
-    // Định dạng lại nội dung hiển thị
+    // Hàm định dạng nội dung hiển thị
     function formatText(text) {
         return text.replace(/\n/g, "<br>");
     }
@@ -335,7 +335,7 @@ function displayResult(response) {
             </div>
 
             <div class="result-section">
-                <h3>🎯 Điểm số: <span style="color: #d9534f;">${response.score}/10</span></h3>
+                <h3>🎯 Điểm số: <span style="color: #d9534f; font-weight: bold;">${response.score}/10</span></h3>
             </div>
 
             <div class="result-section">
@@ -352,11 +352,9 @@ function displayResult(response) {
 
     resultContainer.innerHTML = formattedResponse;
 
-    // Kích hoạt MathJax để hiển thị công thức toán
+    // Kích hoạt MathJax để hiển thị công thức toán nếu có
     MathJax.typesetPromise([resultContainer]).catch(err => console.error("MathJax rendering error:", err));
 }
-
-
 
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
 async function preprocessImage(imageFile) {
