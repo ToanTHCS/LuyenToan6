@@ -138,15 +138,6 @@ h1 {
     background-color: #0056b3;
 }
 
-/* Kết quả chấm bài */
-#result {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
-}
-
 /* Upload ảnh bài làm */
 #studentImage {
     margin-top: 20px;
@@ -234,29 +225,38 @@ h1 {
         width: 100%;
     }
 }
+/* 🌟 Hiển thị khung kết quả chấm bài */
 .result-box {
     max-width: 100%;
     overflow-x: auto;
-    background: #f8f9fa;
-    padding: 10px;
+    background: #ffffff;
+    padding: 12px;
     border-radius: 8px;
-    font-family: monospace;
+    font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
-}
-.result-box h3 {
-    margin-bottom: 5px; /* Giảm khoảng cách giữa tiêu đề và nội dung */
-    font-size: 1.2em; /* Điều chỉnh kích thước chữ nếu cần */
-    color: #d9534f; /* Màu đỏ đẹp hơn */
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    margin-top: 20px; /* Giữ khoảng cách với nội dung phía trên */
 }
 
+/* 🔹 Tiêu đề trong `result-box` */
+.result-box h3 {
+    margin-bottom: 5px;
+    margin-top: 8px;
+    font-size: 1.1em;
+    color: #d9534f;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 🔹 Nội dung bài chấm */
 .result-box pre {
-    background-color: #f8f9fa; /* Nền xám nhẹ */
+    background-color: #f8f9fa;
     padding: 10px;
     border-radius: 5px;
-    white-space: pre-wrap; /* Giữ định dạng xuống dòng */
+    white-space: pre-wrap;
     word-wrap: break-word;
+    line-height: 1.5;
 }
 
