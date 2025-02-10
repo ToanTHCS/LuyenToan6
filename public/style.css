@@ -280,4 +280,29 @@ h1 {
         padding: 8px; /* Giảm padding trên màn hình nhỏ */
     }
 }
+/* 🔹 Điều chỉnh khoảng cách giữa các phần */
+.result-box .result-section {
+    margin-bottom: 12px; /* Giữ khoảng cách hợp lý giữa các phần */
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0; /* Thêm đường phân cách nhẹ */
+}
+
+/* 🔹 Đảm bảo tiêu đề không bị đẩy quá xa */
+.result-box h3 {
+    margin-top: 4px;  /* Giảm khoảng cách từ trên xuống */
+    margin-bottom: 6px; /* Giữ khoảng cách nhỏ hơn với nội dung */
+}
+
+/* 🔹 Giữ nội dung gọn gàng */
+.result-box p {
+    margin: 0; /* Loại bỏ khoảng cách thừa */
+    padding: 4px 8px; /* Giữ padding nhẹ để dễ đọc */
+}
+
+/* 🔹 Loại bỏ đường phân cách cuối cùng */
+.result-box .result-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
 
