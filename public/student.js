@@ -355,7 +355,6 @@ function displayResult(response) {
     // Kích hoạt MathJax để hiển thị công thức toán
     MathJax.typesetPromise([resultContainer]).catch(err => console.error("MathJax rendering error:", err));
 }
-
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
 async function preprocessImage(imageFile) {
     return new Promise((resolve, reject) => {
