@@ -1,36 +1,37 @@
-/* Thêm Google Fonts cho hỗ trợ tiếng Việt */
+/* 🌟 Import Google Fonts hỗ trợ tiếng Việt */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Vietnamese:wght@400;500&display=swap');
 
+/* 🌟 Cấu hình mặc định cho toàn bộ trang */
 * {
     font-family: 'Roboto', sans-serif;
     line-height: 1.6;
+    box-sizing: border-box;
 }
 
-/* Tổng thể trang */
+/* 🌟 Bố cục tổng thể */
 body {
     background-color: #f4f6f8;
     color: #333;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
-/* Phần tiêu đề */
+/* 🌟 Phần tiêu đề chính */
 h1 {
     text-align: center;
-    font-size: 2.5em;
-    margin: 20px 0;
+    font-size: 2.2em;
+    margin: 15px 0;
 }
 
-/* Khung chứa nội dung chính */
+/* 🌟 Nội dung chính */
 #mainContent {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
-/* Định dạng danh sách bài tập */
+/* 🔹 Danh sách bài tập */
 #problemList {
     display: flex;
     gap: 10px;
@@ -38,7 +39,7 @@ h1 {
     margin-bottom: 20px;
 }
 
-/* Mỗi bài tập */
+/* 🔹 Mỗi bài tập */
 .problem-box {
     padding: 10px 15px;
     background-color: #f0f0f0;
@@ -51,7 +52,7 @@ h1 {
     background-color: #e0e0e0;
 }
 
-/* Khung chứa đề bài */
+/* 🔹 Đề bài */
 #problemContainer {
     margin-bottom: 20px;
 }
@@ -63,54 +64,48 @@ h1 {
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Kết quả chấm bài */
-#result {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* 🔹 Điều chỉnh hiển thị kết quả chấm bài */
+/* 📌 **Kết quả chấm bài - Hiển thị đẹp hơn** */
 .result-box {
     max-width: 100%;
     overflow-x: auto;
-    background: #f8f9fa;
-    padding: 15px; /* Tăng padding để nhìn thoáng hơn */
+    background: #ffffff;
+    padding: 12px; /* Giảm padding để không bị rộng quá */
     border-radius: 8px;
-    font-family: monospace;
+    font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* 🔹 Giảm khoảng cách giữa tiêu đề và nội dung */
+/* 🔹 Tiêu đề trong `result-box` */
 .result-box h3 {
-    margin-bottom: 3px; /* Giảm khoảng cách xuống còn 3px */
-    font-size: 1.1em; /* Điều chỉnh kích thước chữ */
+    margin-bottom: 5px;  /* Giảm khoảng cách giữa tiêu đề và nội dung */
+    margin-top: 8px; /* Giảm khoảng cách trên */
+    font-size: 1.1em; /* Điều chỉnh kích thước tiêu đề */
     color: #d9534f; /* Màu đỏ nổi bật */
+    font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 6px; /* Khoảng cách giữa icon và chữ */
+    gap: 6px; /* Giữ khoảng cách nhỏ giữa icon và chữ */
 }
 
-/* 🔹 Giảm chiều cao icon trước tiêu đề */
+/* 🔹 Icon ghim không bị tràn dòng */
 .result-box h3::before {
     content: "📌";
-    font-size: 1em; /* Giảm kích thước icon để không bị đẩy dòng */
+    font-size: 1em; /* Giảm kích thước icon */
     display: inline-block;
 }
 
-/* 🔹 Điều chỉnh khoảng cách giữa các dòng trong pre */
+/* 🔹 Định dạng nội dung bài chấm */
 .result-box pre {
     background-color: #f8f9fa; /* Màu nền nhẹ */
-    padding: 8px; /* Giảm padding để không bị tràn */
+    padding: 10px;
     border-radius: 5px;
-    white-space: pre-wrap;
+    white-space: pre-wrap; /* Giữ định dạng gốc */
     word-wrap: break-word;
-    line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
+    line-height: 1.5; /* Giữ khoảng cách dòng hợp lý */
 }
 
-/* 🔹 Responsive cho màn hình nhỏ */
+/* 🛠 **Tối ưu cho Mobile** */
 @media (max-width: 768px) {
     #mainContent {
         padding: 10px;
