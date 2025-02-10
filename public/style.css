@@ -225,11 +225,11 @@ h1 {
         width: 100%;
     }
 }
-/* 🔹 Khung chứa kết quả chấm bài */
+/* 🔹 Cấu trúc khung kết quả chấm bài */
 .result-box {
     max-width: 100%;
     background: #ffffff;
-    padding: 8px; /* Giảm padding tổng thể */
+    padding: 8px; /* Giữ padding vừa phải */
     border-radius: 6px;
     font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
@@ -239,16 +239,16 @@ h1 {
 
 /* 🔹 Mỗi phần trong kết quả */
 .result-section {
-    margin-bottom: 4px; /* Giảm khoảng cách giữa các phần */
+    margin-bottom: 3px; /* Giảm khoảng cách giữa các phần */
     padding: 5px 8px; /* Giảm padding để nội dung gần tiêu đề hơn */
     background-color: #f9f9f9;
     border-radius: 5px;
 }
 
-/* 🔹 Tiêu đề trong kết quả */
+/* 🔹 Tiêu đề trong từng phần */
 .result-section h3 {
     margin: 0;
-    padding: 3px 0; /* Giảm padding trên dưới để tiêu đề gần hơn với nội dung */
+    padding: 2px 0; /* Giảm padding trên dưới để tiêu đề gần hơn với nội dung */
     font-size: 1em;
     color: #d9534f;
     font-weight: 700;
@@ -259,29 +259,28 @@ h1 {
 
 /* 🔹 Icon trước tiêu đề */
 .result-section h3::before {
-    content: "📌";
     font-size: 0.85em;
     display: inline-block;
     margin-right: 4px;
 }
 
-/* 🔹 Nội dung bài chấm (pre) */
+/* 🔹 Nội dung bài chấm */
 .result-section pre {
     background-color: transparent;
-    padding: 2px;
+    padding: 0; /* Giảm padding để sát nội dung */
     border-radius: 4px;
     white-space: pre-wrap;
     word-wrap: break-word;
-    line-height: 1.3; /* Giảm khoảng cách giữa các dòng */
+    line-height: 1.4; /* Giảm khoảng cách giữa các dòng */
     margin: 0;
 }
 
-/* 🔹 Giảm khoảng cách giữa các phần cuối cùng */
+/* 🔹 Loại bỏ khoảng trống thừa giữa các phần cuối */
 .result-section:last-child {
-    margin-bottom: 3px;
+    margin-bottom: 0;
 }
 
-/* 🔹 Điều chỉnh điểm số để nổi bật */
+/* 🔹 Điểm số nổi bật hơn */
 .score-box {
     font-size: 1.2em;
     font-weight: bold;
@@ -289,6 +288,12 @@ h1 {
     display: flex;
     align-items: center;
     gap: 6px;
+    padding: 5px 0;
+}
+
+/* 🔹 Giảm khoảng cách giữa các phần */
+.result-box .result-section {
+    margin-bottom: 2px; /* Giảm khoảng cách xuống mức tối thiểu */
 }
 
 /* 🔹 Responsive cho màn hình nhỏ */
@@ -297,8 +302,7 @@ h1 {
         padding: 6px;
     }
     .result-section {
-        margin-bottom: 3px;
-        padding: 4px 8px;
+        margin-bottom: 2px;
+        padding: 4px 6px;
     }
 }
-
