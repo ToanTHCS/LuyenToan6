@@ -304,9 +304,6 @@ ${problemText}
         };
     }
 }
-
-
-
 function displayResult(response) {
     const resultContainer = document.getElementById("result");
 
@@ -322,22 +319,34 @@ function displayResult(response) {
 
     const formattedResponse = `
         <div class="result-box">
-            <h3>📌 Bài làm của học sinh:</h3>
-            <pre>${formatText(response.studentAnswer)}</pre>
-            
-            <h3>📝 Lời giải chi tiết:</h3>
-            <pre>${formatText(response.detailedSolution)}</pre>
-            
-            <h3>📊 Cách chấm điểm:</h3>
-            <pre>${formatText(response.gradingDetails)}</pre>
-            
-            <h3>🎯 Điểm số: ${response.score}/10</h3>
-            
-            <h3>📢 Nhận xét:</h3>
-            <pre>${formatText(response.feedback)}</pre>
-            
-            <h3>🔍 Gợi ý cải thiện:</h3>
-            <pre>${formatText(response.suggestions)}</pre>
+            <div class="result-section">
+                <h3>📌 Bài làm của học sinh:</h3>
+                <pre>${formatText(response.studentAnswer)}</pre>
+            </div>
+
+            <div class="result-section">
+                <h3>📝 Lời giải chi tiết:</h3>
+                <pre>${formatText(response.detailedSolution)}</pre>
+            </div>
+
+            <div class="result-section">
+                <h3>📊 Cách chấm điểm:</h3>
+                <pre>${formatText(response.gradingDetails)}</pre>
+            </div>
+
+            <div class="result-section">
+                <h3>🎯 Điểm số: ${response.score}/10</h3>
+            </div>
+
+            <div class="result-section">
+                <h3>📢 Nhận xét:</h3>
+                <pre>${formatText(response.feedback)}</pre>
+            </div>
+
+            <div class="result-section">
+                <h3>🔍 Gợi ý cải thiện:</h3>
+                <pre>${formatText(response.suggestions)}</pre>
+            </div>
         </div>
     `;
 
