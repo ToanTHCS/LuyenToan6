@@ -312,7 +312,7 @@ function displayResult(response) {
         return;
     }
 
-    // Định dạng lại các trường có chứa nhiều dòng
+    // Định dạng lại nội dung hiển thị
     function formatText(text) {
         return text.replace(/\n/g, "<br>");
     }
@@ -321,17 +321,17 @@ function displayResult(response) {
         <div class="result-box">
             <div class="result-section">
                 <h3>📌 Bài làm của học sinh:</h3>
-                <pre>${formatText(response.studentAnswer)}</pre>
+                <p>${formatText(response.studentAnswer)}</p>
             </div>
-
+            
             <div class="result-section">
                 <h3>📝 Lời giải chi tiết:</h3>
-                <pre>${formatText(response.detailedSolution)}</pre>
+                <p>${formatText(response.detailedSolution)}</p>
             </div>
 
             <div class="result-section">
                 <h3>📊 Cách chấm điểm:</h3>
-                <pre>${formatText(response.gradingDetails)}</pre>
+                <p>${formatText(response.gradingDetails)}</p>
             </div>
 
             <div class="result-section score-box">
@@ -341,12 +341,12 @@ function displayResult(response) {
 
             <div class="result-section">
                 <h3>📢 Nhận xét:</h3>
-                <pre>${formatText(response.feedback)}</pre>
+                <p>${formatText(response.feedback)}</p>
             </div>
 
             <div class="result-section">
                 <h3>🔍 Gợi ý cải thiện:</h3>
-                <pre>${formatText(response.suggestions)}</pre>
+                <p>${formatText(response.suggestions)}</p>
             </div>
         </div>
     `;
@@ -356,6 +356,7 @@ function displayResult(response) {
     // Kích hoạt MathJax để hiển thị công thức toán
     MathJax.typesetPromise([resultContainer]).catch(err => console.error("MathJax rendering error:", err));
 }
+
 
 // Hàm xử lý ảnh trước khi gửi lên AI (ĐÃ SỬA LẠI)
 async function preprocessImage(imageFile) {
