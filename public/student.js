@@ -334,8 +334,9 @@ function displayResult(response) {
                 <pre>${formatText(response.gradingDetails)}</pre>
             </div>
 
-            <div class="result-section">
-                <h3>🎯 Điểm số: <span style="color: #d9534f;">${response.score}/10</span></h3>
+            <div class="result-section score-box">
+                <h3>🎯 Điểm số:</h3>
+                <span>${response.score}/10</span>
             </div>
 
             <div class="result-section">
