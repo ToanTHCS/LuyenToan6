@@ -260,7 +260,3 @@ h1 {
     word-wrap: break-word;
 }
 
-.result-box h3::before {
-    content: "📌"; /* Icon Ghim */
-    font-size: 1.1em;
-}
