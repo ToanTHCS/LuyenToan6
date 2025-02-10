@@ -225,55 +225,59 @@ h1 {
         width: 100%;
     }
 }
-/* 🔹 Chỉnh sửa phần hiển thị bài làm */
+/* 🔹 Cấu trúc chung */
 .result-box {
-    max-width: 100%;
+    width: 100%;
     overflow-x: auto;
     background: #f8f9fa;
     padding: 12px;
     border-radius: 8px;
     font-family: 'Roboto', sans-serif;
     white-space: pre-wrap;
-    margin-top: 20px;  /* Điều chỉnh khoảng cách phía trên */
-    margin-bottom: 20px; /* Điều chỉnh khoảng cách phía dưới */
+    margin: 10px 0; /* Giữ khoảng cách hợp lý */
 }
 
-/* 🔹 Điều chỉnh khoảng cách tiêu đề */
+/* 🔹 Mỗi phần hiển thị */
+.result-section {
+    display: flex;
+    flex-direction: column; /* Xếp tiêu đề và nội dung theo chiều dọc */
+    align-items: flex-start; /* Căn lề tiêu đề về bên trái */
+    padding-bottom: 8px; /* Giữ khoảng cách nhỏ giữa các phần */
+}
+
+/* 🔹 Tiêu đề (không bị co lại khi nội dung dài) */
 .result-box h3 {
-    margin-bottom: 6px; /* Giảm khoảng cách giữa tiêu đề và nội dung */
-    margin-top: 10px; /* Giảm khoảng cách lề trên */
-    font-size: 1.2em;
+    flex-shrink: 0; /* Không cho tiêu đề co lại */
+    min-height: 30px; /* Đặt chiều cao tối thiểu cho tiêu đề */
+    margin: 8px 0 4px 0; /* Giảm khoảng cách giữa tiêu đề và nội dung */
+    font-size: 1.1em;
     color: #d9534f;
     display: flex;
     align-items: center;
-    gap: 8px; /* Khoảng cách giữa icon và chữ */
+    gap: 6px;
     font-weight: bold;
 }
 
-/* 🔹 Định dạng lại icon trước tiêu đề */
-.result-box h3::before {
-    font-size: 1.1em;
-}
-
-/* 🔹 Thêm khoảng cách hợp lý giữa các phần */
-.result-section {
-    margin-bottom: 15px; /* Giữ khoảng cách hợp lý giữa các mục */
-}
-
-/* 🔹 Định dạng nội dung hiển thị */
+/* 🔹 Nội dung luôn hiển thị đúng kích thước */
 .result-box p {
     background-color: #ffffff;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 6px;
+    border-radius: 4px;
     white-space: pre-wrap;
     word-wrap: break-word;
-    line-height: 1.5; /* Điều chỉnh khoảng cách dòng */
+    line-height: 1.4;
+    margin: 0; /* Loại bỏ margin dư thừa */
+}
+
+/* 🔹 Đảm bảo khoảng cách giữa các mục không quá lớn */
+.result-box .result-section:not(:last-child) {
+    margin-bottom: 6px;
 }
 
 /* 🔹 Responsive: Điều chỉnh trên thiết bị nhỏ */
 @media (max-width: 768px) {
     .result-box {
-        padding: 10px; /* Giảm padding để vừa với màn hình nhỏ */
+        padding: 8px; /* Giảm padding trên màn hình nhỏ */
     }
 }
 
