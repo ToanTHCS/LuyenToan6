@@ -243,16 +243,24 @@ h1 {
     font-family: monospace;
     white-space: pre-wrap;
 }
-
 .result-box h3 {
-    color: #0056b3;
-    margin-top: 10px;
+    margin-bottom: 5px; /* Giảm khoảng cách giữa tiêu đề và nội dung */
+    font-size: 1.2em; /* Điều chỉnh kích thước chữ nếu cần */
+    color: #d9534f; /* Màu đỏ đẹp hơn */
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .result-box pre {
-    background: #fff;
-    padding: 8px;
+    background-color: #f8f9fa; /* Nền xám nhẹ */
+    padding: 10px;
     border-radius: 5px;
-    overflow-x: auto;
-    white-space: pre-wrap; /* Đảm bảo nội dung không bị tràn */
+    white-space: pre-wrap; /* Giữ định dạng xuống dòng */
+    word-wrap: break-word;
+}
+
+.result-box h3::before {
+    content: "📌"; /* Icon Ghim */
+    font-size: 1.1em;
 }
