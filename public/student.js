@@ -129,24 +129,28 @@ function displayProblem(problem) {
 // Tải tiến trình học sinh
 let isLoadingProgress = false; // 🆕 Biến kiểm soát trạng thái tải tiến trình
 
-async function loadProgress(studentId) {
+async function loadProgress(studentId, forceReload = false) {
     try {
-        console.log(`🔄 Đang tải tiến trình của học sinh ${studentId}...`);
+        console.log(`🔹 Đang tải tiến trình cho học sinh: ${studentId}`);
 
-        // Bỏ qua cache bằng cách thêm timestamp
-        const response = await fetch(`/api/get-progress?studentId=${studentId}&t=${Date.now()}`);
+        // 🆕 Thêm timestamp để ngăn trình duyệt cache dữ liệu cũ
+        const url = `/api/get-progress?studentId=${studentId}&t=${new Date().getTime()}`;
 
+        const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`Lỗi khi tải tiến trình (Mã lỗi: ${response.status})`);
+            throw new Error(`Không thể tải tiến trình (Mã lỗi: ${response.status})`);
         }
 
         const progress = await response.json();
-        progressData = progress || { problemsDone: [] };
+        if (!progress || Object.keys(progress).length === 0) {
+            throw new Error(`❌ Không tìm thấy tiến trình của học sinh ${studentId}.`);
+        }
 
-        console.log(`✅ Tiến trình của học sinh ${studentId} đã tải lại:`, progressData);
+        progressData = progress;
+        console.log(`✅ Tiến trình của học sinh ${studentId}:`, progressData);
 
-        updateProblemColors();
         updateProgressUI();
+        updateProblemColors();
     } catch (error) {
         console.error("❌ Lỗi khi tải tiến trình:", error);
         alert("⚠ Không thể tải tiến trình học sinh! Hãy kiểm tra lại dữ liệu.");
