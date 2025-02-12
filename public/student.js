@@ -39,9 +39,7 @@ async function initStudentPage() {
     console.log(`🔹 Đang tải dữ liệu học sinh: ${studentId}`);
     await loadStudentData(studentId);
     await loadProblems();
-    await loadProgress(studentId);
-    updateProblemColors(); // Cập nhật màu bài tập đã làm
-    
+    await loadProgress(studentId);     
     console.log("✅ Trang học sinh đã khởi tạo hoàn tất!");
 }
 
