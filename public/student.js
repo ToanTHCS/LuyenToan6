@@ -129,33 +129,33 @@ function displayProblem(problem) {
 // Tải tiến trình học sinh
 let isLoadingProgress = false; // 🆕 Biến kiểm soát trạng thái tải tiến trình
 
-async function loadProgress(studentId, forceReload = false) {
+async function loadProgress(studentId) {
     try {
-        console.log(`🔹 Đang tải tiến trình cho học sinh: ${studentId}`);
+        console.log(`🔄 Đang tải tiến trình từ API cho học sinh: ${studentId}`);
 
-        // 🆕 Thêm timestamp để ngăn trình duyệt cache dữ liệu cũ
-        const url = `/api/get-progress?studentId=${studentId}&t=${new Date().getTime()}`;
+        // Thêm timestamp để đảm bảo lấy dữ liệu mới
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/get-progress?studentId=${studentId}&t=${timestamp}`);
 
-        const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`Không thể tải tiến trình (Mã lỗi: ${response.status})`);
+            throw new Error(`Lỗi API: ${response.status} - ${response.statusText}`);
         }
 
         const progress = await response.json();
+        console.log("✅ Dữ liệu tiến trình tải về:", progress);
+
         if (!progress || Object.keys(progress).length === 0) {
             throw new Error(`❌ Không tìm thấy tiến trình của học sinh ${studentId}.`);
         }
 
         progressData = progress;
-        console.log(`✅ Tiến trình của học sinh ${studentId}:`, progressData);
-
         updateProgressUI();
         updateProblemColors();
     } catch (error) {
         console.error("❌ Lỗi khi tải tiến trình:", error);
-        alert("⚠ Không thể tải tiến trình học sinh! Hãy kiểm tra lại dữ liệu.");
     }
 }
+
 
 // ✅ Cập nhật màu sắc bài tập dựa trên tiến trình học sinh
 function updateProblemColors() {
