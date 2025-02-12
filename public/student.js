@@ -196,8 +196,11 @@ async function saveProgress(studentId, problemId, score) {
 
         progressData.problemsDone = progressData.problemsDone || [];
 
-        if (!progressData.problemsDone.includes(problemId)) {
-            progressData.problemsDone.push(problemId);
+        // 🔹 Đảm bảo lưu dữ liệu theo dạng "Bài X"
+        let problemKey = `Bài ${problemId}`;
+
+        if (!progressData.problemsDone.includes(problemKey)) {
+            progressData.problemsDone.push(problemKey);
             progressData.completedExercises = (progressData.completedExercises || 0) + 1;
             progressData.totalScore = (progressData.totalScore || 0) + score;
             progressData.averageScore = progressData.totalScore / progressData.completedExercises;
@@ -205,7 +208,7 @@ async function saveProgress(studentId, problemId, score) {
 
         const requestData = {
             studentId: studentId,
-            problemId: problemId,
+            problemId: problemKey, // 🆕 Lưu theo dạng "Bài X"
             completedExercises: progressData.completedExercises || 0,
             totalScore: progressData.totalScore || 0,
             averageScore: progressData.averageScore || 0,
@@ -221,11 +224,10 @@ async function saveProgress(studentId, problemId, score) {
         });
 
         const result = await response.json();
-
         if (response.ok) {
             console.log(`✅ Tiến trình của ${studentId} đã được cập nhật:`, result);
-
-            // Đợi 1 giây rồi tải lại dữ liệu
+            
+            // 🔄 Đợi 1 giây rồi tải lại dữ liệu
             setTimeout(async () => {
                 console.log("🔄 Tải lại tiến trình sau khi lưu...");
                 await loadProgress(studentId);
