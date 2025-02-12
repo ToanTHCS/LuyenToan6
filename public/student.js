@@ -235,7 +235,7 @@ async function saveProgress(studentId, problemId, score) {
             setTimeout(async () => {
                 console.log("🔄 Tải lại tiến trình sau khi lưu...");
                 await loadProgress(studentId);
-            }, 3000);
+            }, 5000);
         } else {
             console.error(`❌ Lỗi cập nhật tiến trình (API Response):`, result);
         }
