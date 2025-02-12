@@ -566,7 +566,6 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         // 🔄 Đợi 1 giây để đảm bảo dữ liệu đã được cập nhật
         setTimeout(async () => {
             console.log("🔄 Tải lại tiến trình sau khi lưu...");
-            await loadProgress(studentId);
             updateProblemColors();
             updateProgressUI();
         }, 1000); // Đợi 1 giây
