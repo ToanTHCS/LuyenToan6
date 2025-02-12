@@ -1,34 +1,28 @@
-// api/get-progress.js (Sử dụng ESM)
 export default async function handler(req, res) {
-    const { studentId } = req.query;
-
-    if (!studentId) {
-        return res.status(400).json({ message: "❌ Thiếu `studentId` trong yêu cầu!" });
-    }
-
-    const GITHUB_PROGRESS_URL = "https://raw.githubusercontent.com/OnToanAnhDuong/LuyenToan6/main/data/progress.json";
-
     try {
-        console.log(`📥 Đang lấy tiến trình của học sinh ${studentId} từ GitHub...`);
-
-        // Lấy dữ liệu tiến trình từ GitHub
-        const response = await fetch(GITHUB_PROGRESS_URL);
-        if (!response.ok) {
-            throw new Error(`❌ Lỗi khi lấy dữ liệu từ GitHub: ${response.statusText}`);
+        const studentId = req.query.studentId;
+        if (!studentId) {
+            return res.status(400).json({ error: "Thiếu studentId" });
         }
 
-        const data = await response.json();
+        // Gọi API GitHub để lấy dữ liệu mới nhất
+        const githubResponse = await fetch(GITHUB_JSON_URL, {
+            headers: { "Cache-Control": "no-cache" }
+        });
 
-        // Kiểm tra nếu không có dữ liệu cho studentId trong progress.json
-        if (!data[studentId]) {
-            return res.status(404).json({ message: `❌ Không tìm thấy tiến trình cho học sinh ${studentId}.` });
+        if (!githubResponse.ok) {
+            throw new Error("Không thể lấy dữ liệu từ GitHub.");
         }
 
-        console.log(`✅ Tiến trình của học sinh ${studentId}:`, data[studentId]);
-        return res.status(200).json(data[studentId]);
+        const progressData = await githubResponse.json();
 
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+        res.setHeader("Expires", "0");
+        res.setHeader("Pragma", "no-cache");
+
+        res.status(200).json(progressData[studentId] || {});
     } catch (error) {
-        console.error("❌ Lỗi khi lấy tiến trình:", error);
-        return res.status(500).json({ message: "❌ Lỗi hệ thống khi lấy tiến trình học sinh." });
+        console.error("❌ Lỗi khi tải tiến trình:", error);
+        res.status(500).json({ error: "Lỗi khi tải tiến trình" });
     }
 }
