@@ -80,7 +80,6 @@ const loadProblems = async () => {
         console.error("❌ Lỗi khi tải danh sách bài tập:", error);
     }
 };
-
 // Hiển thị danh sách bài tập
 function displayProblemList(problems) {
     const problemContainer = document.getElementById("problemList");
