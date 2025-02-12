@@ -554,8 +554,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         // 🔄 Đợi 1 giây để đảm bảo dữ liệu đã được cập nhật
         setTimeout(async () => {
             console.log("🔄 Tải lại tiến trình sau khi lưu...");
-            updateProgressUI(); 
             await loadProgress(studentId);
+            updateProgressUI();            
         }, 5000); // Đợi 1 giây
        } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
