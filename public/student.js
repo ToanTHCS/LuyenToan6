@@ -129,38 +129,27 @@ function displayProblem(problem) {
 // Tải tiến trình học sinh
 let isLoadingProgress = false; // 🆕 Biến kiểm soát trạng thái tải tiến trình
 
-async function loadProgress(studentId, forceReload = false) {
-    if (isLoadingProgress) {
-        console.warn("⚠ Đang tải tiến trình, bỏ qua lần gọi này...");
-        return; // Nếu đang tải tiến trình, không gọi lại
-    }
-
-    isLoadingProgress = true; // Bắt đầu tải tiến trình
+async function loadProgress(studentId) {
     try {
-        console.log(`🔹 Đang tải tiến trình cho học sinh: ${studentId}`);
+        console.log(`🔄 Đang tải tiến trình của học sinh ${studentId}...`);
 
-        // 🆕 Thêm timestamp vào URL để ngăn cache cũ
-        const url = `/api/get-progress?studentId=${studentId}&t=${new Date().getTime()}`;
+        // Thêm timestamp để lấy dữ liệu mới nhất, tránh cache
+        const response = await fetch(`/api/get-progress?studentId=${studentId}&t=${Date.now()}`);
 
-        const response = await fetch(url);
         if (!response.ok) {
-            throw new Error(`Không thể tải tiến trình (Mã lỗi: ${response.status})`);
+            throw new Error(`Lỗi khi tải tiến trình (Mã lỗi: ${response.status})`);
         }
 
         const progress = await response.json();
-        if (!progress || Object.keys(progress).length === 0) {
-            throw new Error(`❌ Không tìm thấy tiến trình của học sinh ${studentId}.`);
-        }
+        progressData = progress || { problemsDone: [] };
 
-        progressData = progress;
-        console.log(`✅ Tiến trình của học sinh ${studentId}:`, progressData);
+        console.log(`✅ Tiến trình của học sinh ${studentId} đã tải lại:`, progressData);
 
-        updateProgressUI();
         updateProblemColors();
+        updateProgressUI();
     } catch (error) {
         console.error("❌ Lỗi khi tải tiến trình:", error);
-    } finally {
-        isLoadingProgress = false; // Kết thúc tải tiến trình
+        alert("⚠ Không thể tải tiến trình học sinh! Hãy kiểm tra lại dữ liệu.");
     }
 }
 
