@@ -129,11 +129,19 @@ function displayProblem(problem) {
 }
 
 // Tải tiến trình học sinh
+let isLoadingProgress = false; // 🆕 Biến kiểm soát trạng thái tải tiến trình
+
 async function loadProgress(studentId, forceReload = false) {
+    if (isLoadingProgress) {
+        console.warn("⚠ Đang tải tiến trình, bỏ qua lần gọi này...");
+        return; // Nếu đang tải tiến trình, không gọi lại
+    }
+
+    isLoadingProgress = true; // Bắt đầu tải tiến trình
     try {
         console.log(`🔹 Đang tải tiến trình cho học sinh: ${studentId}`);
 
-        // 🆕 Thêm timestamp để ngăn trình duyệt cache dữ liệu cũ
+        // 🆕 Thêm timestamp vào URL để ngăn cache cũ
         const url = `/api/get-progress?studentId=${studentId}&t=${new Date().getTime()}`;
 
         const response = await fetch(url);
@@ -153,7 +161,8 @@ async function loadProgress(studentId, forceReload = false) {
         updateProblemColors();
     } catch (error) {
         console.error("❌ Lỗi khi tải tiến trình:", error);
-        alert("⚠ Không thể tải tiến trình học sinh! Hãy kiểm tra lại dữ liệu.");
+    } finally {
+        isLoadingProgress = false; // Kết thúc tải tiến trình
     }
 }
 
