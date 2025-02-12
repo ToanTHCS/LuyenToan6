@@ -208,9 +208,8 @@ async function saveProgress(studentId, problemId, score) {
         }
 
         progressData.problemsDone = progressData.problemsDone || [];
-
-        // 🔹 Đảm bảo bài tập lưu dưới dạng "Bài X"
         let problemKey = `Bài ${problemId}`;
+
         if (!progressData.problemsDone.includes(problemKey)) {
             progressData.problemsDone.push(problemKey);
             progressData.completedExercises = (progressData.completedExercises || 0) + 1;
@@ -242,7 +241,7 @@ async function saveProgress(studentId, problemId, score) {
             // 🔄 Đợi 1 giây trước khi tải lại dữ liệu để tránh lỗi cache
             setTimeout(() => {
                 console.log("🔄 Tải lại tiến trình sau khi lưu...");
-                loadProgress(studentId, true); // 🆕 Thêm tham số để buộc tải dữ liệu mới
+                loadProgress(studentId, true);
             }, 1000);
         } else {
             console.error(`❌ Lỗi cập nhật tiến trình (API Response):`, result);
