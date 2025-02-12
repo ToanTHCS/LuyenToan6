@@ -133,7 +133,7 @@ async function loadProgress(studentId) {
     try {
         console.log(`🔄 Đang tải tiến trình của học sinh ${studentId}...`);
 
-        // Thêm timestamp để lấy dữ liệu mới nhất, tránh cache
+        // Bỏ qua cache bằng cách thêm timestamp
         const response = await fetch(`/api/get-progress?studentId=${studentId}&t=${Date.now()}`);
 
         if (!response.ok) {
