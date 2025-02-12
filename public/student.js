@@ -230,11 +230,7 @@ async function saveProgress(studentId, problemId, score) {
         if (response.ok) {
             console.log(`✅ Tiến trình của ${studentId} đã được cập nhật:`, result);
             
-            // 🔄 Đợi 1 giây rồi tải lại dữ liệu
-            setTimeout(async () => {
-                console.log("🔄 Tải lại tiến trình sau khi lưu...");
-                await loadProgress(studentId);
-            }, 10000);
+           
         } else {
             console.error(`❌ Lỗi cập nhật tiến trình (API Response):`, result);
         }
@@ -558,7 +554,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         // 🔄 Đợi 1 giây để đảm bảo dữ liệu đã được cập nhật
         setTimeout(async () => {
             console.log("🔄 Tải lại tiến trình sau khi lưu...");
-            updateProgressUI();
+           await loadProgress(studentId);
+            updateProgressUI();            
         }, 2000); // Đợi 1 giây
        } catch (error) {
         console.error("❌ Lỗi khi chấm bài:", error);
@@ -567,3 +564,8 @@ document.getElementById("submitBtn").addEventListener("click", async () => {
         isGrading = false;
     }
 });
+ // 🔄 Đợi 1 giây rồi tải lại dữ liệu
+//setTimeout(async () => {
+//console.log("🔄 Tải lại tiến trình sau khi lưu...");
+//await loadProgress(studentId);
+           // }, 10000);
